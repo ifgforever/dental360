@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dental 360 Signage</title>
+<meta name="description" content="Lobby TV signage for Dental 360 Irving Park Family Dentistry">
+<link rel="icon" href="assets/tooth.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap">
+<style>
+  :root{
+    --blue:#0048FE; --blue-deep:#0b1f4d; --blue-mid:#1b5cff; --sky:#2ca1db; --red:#e30613;
+    --ink:#0b1f4d; --muted:#5a6b8c; --paper:#ffffff; --mist:#eef3ff; --gold:#f5b301;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;background:#000;overflow:hidden;cursor:none}
+  body{font-family:Poppins,"Segoe UI",Helvetica,Arial,sans-serif;color:var(--ink)}
+  /* 1920x1080 canvas scaled to fit any screen */
+  #stage{position:absolute;left:50%;top:50%;width:1920px;height:1080px;transform-origin:center;background:var(--paper)}
+  #slides{position:absolute;inset:0 0 96px 0;overflow:hidden}
+  .slide{position:absolute;inset:0;opacity:0;transition:opacity .9s ease;pointer-events:none}
+  .slide.active{opacity:1}
+  .slide .in{opacity:0;transform:translateY(28px);transition:opacity .8s ease,transform .8s ease}
+  .slide.active .in{opacity:1;transform:none}
+  .slide.active .in:nth-child(2){transition-delay:.15s}
+  .slide.active .in:nth-child(3){transition-delay:.3s}
+  .slide.active .in:nth-child(4){transition-delay:.45s}
+
+  /* ---------- bottom bar ---------- */
+  #bar{position:absolute;left:0;right:0;bottom:0;height:96px;background:var(--blue-deep);color:#fff;display:flex;align-items:center;overflow:hidden;box-shadow:0 -6px 30px rgba(0,0,0,.25)}
+  #bar .brand{display:flex;align-items:center;gap:16px;padding:0 34px;height:100%;background:linear-gradient(90deg,#071a44,#0b1f4d);flex:0 0 auto;z-index:2}
+  #bar .brand img{height:62px;width:auto}
+  #bar .brand b{font-size:34px;font-weight:800;color:#fff;letter-spacing:.5px}
+  #bar .brand b span{color:#ff5a63}
+  #bar .brand small{display:block;font-size:17px;font-weight:500;color:#9db6ff;letter-spacing:1.5px;text-transform:uppercase;margin-top:-4px}
+  #tickerwrap{flex:1;height:100%;position:relative;overflow:hidden}
+  #ticker{position:absolute;top:0;height:100%;display:flex;align-items:center;white-space:nowrap;font-size:30px;font-weight:500;will-change:transform}
+  #ticker span{padding:0 60px;position:relative}
+  #ticker span::after{content:"";position:absolute;right:-6px;top:50%;width:12px;height:12px;border-radius:50%;background:var(--sky);transform:translateY(-50%)}
+  #clock{flex:0 0 auto;display:flex;align-items:center;gap:30px;padding:0 40px;height:100%;background:linear-gradient(90deg,#0b1f4d,#071a44);z-index:2}
+  #clock .time{font-size:46px;font-weight:700;line-height:1}
+  #clock .date{font-size:19px;color:#9db6ff;font-weight:500;margin-top:4px}
+  #weather{display:flex;align-items:center;gap:12px;font-size:36px;font-weight:600;padding-left:30px;border-left:2px solid rgba(255,255,255,.15)}
+  #weather .ico{font-size:44px}
+  #weather:empty{display:none}
+  #progress{position:absolute;left:0;bottom:96px;height:7px;width:0;background:linear-gradient(90deg,var(--sky),var(--blue));z-index:5}
+
+  /* ---------- shared pieces ---------- */
+  .eyebrow{display:inline-block;align-self:flex-start;font-size:26px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:var(--blue);background:var(--mist);padding:10px 26px;border-radius:999px}
+  h1{font-size:112px;font-weight:800;line-height:1.02;letter-spacing:-2px}
+  h2{font-size:84px;font-weight:800;line-height:1.05;letter-spacing:-1.5px}
+  .lead{font-size:40px;font-weight:400;color:var(--muted);line-height:1.4}
+  .red{color:var(--red)} .blue{color:var(--blue)}
+  .bg-photo{position:absolute;inset:0;background-size:cover;background-position:center}
+  .wash{position:absolute;inset:0;background:linear-gradient(100deg,rgba(255,255,255,.98) 0%,rgba(255,255,255,.95) 48%,rgba(255,255,255,.25) 100%)}
+  .pad{position:absolute;inset:0;padding:110px 120px}
+
+  /* welcome */
+  .welcome .wash{background:linear-gradient(100deg,#fff 0%,#fff 46%,rgba(255,255,255,.1) 100%)}
+  .welcome .pad{display:flex;flex-direction:column;justify-content:center;gap:34px;max-width:1150px}
+  .welcome .logo{display:flex;align-items:center;gap:30px}
+  .welcome .logo img{height:150px}
+  .welcome .logo b{font-size:120px;font-weight:800;color:var(--red);letter-spacing:-2px;line-height:1}
+  .welcome .office{font-size:56px;font-weight:600;color:var(--blue);letter-spacing:1px}
+  .welcome .chips{display:flex;gap:18px;flex-wrap:wrap}
+  .chip{font-size:28px;font-weight:600;background:var(--blue-deep);color:#fff;padding:14px 28px;border-radius:999px}
+  .chip.alt{background:var(--mist);color:var(--blue)}
+
+  /* services */
+  .services{background:linear-gradient(160deg,#f7f9ff,#e9f0ff)}
+  .services .pad{padding:80px 110px}
+  .services .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:34px;margin-top:44px}
+  .card{background:#fff;border-radius:30px;padding:40px 42px;box-shadow:0 14px 40px rgba(11,31,77,.08);border-top:8px solid var(--blue)}
+  .card .ico{font-size:66px;line-height:1}
+  .card h3{font-size:40px;font-weight:700;margin:18px 0 10px;color:var(--ink)}
+  .card p{font-size:27px;color:var(--muted);line-height:1.35}
+
+  /* tip */
+  .tip{background:radial-gradient(1200px 800px at 85% 20%,#1b5cff 0%,#0b1f4d 60%);color:#fff}
+  .tip .pad{display:flex;flex-direction:column;justify-content:center;gap:36px;padding-right:900px}
+  .tip .eyebrow{background:rgba(255,255,255,.12);color:#bcd0ff}
+  .tip h2{color:#fff;font-size:96px}
+  .tip .lead{color:#dbe5ff;font-size:46px}
+  .tip img{position:absolute;right:120px;top:50%;transform:translateY(-50%);height:640px;filter:drop-shadow(0 30px 60px rgba(0,0,0,.45))}
+
+  /* reviews */
+  .reviews{background:linear-gradient(160deg,#fff,#f2f6ff)}
+  .reviews .pad{display:flex;flex-direction:column;justify-content:center;gap:40px;padding-right:160px}
+  .stars{color:var(--gold);font-size:64px;letter-spacing:6px;line-height:1}
+  .quote{font-size:60px;font-weight:500;line-height:1.3;color:var(--ink)}
+  .quote::before{content:"\201C";color:var(--sky);font-size:140px;line-height:0;vertical-align:-50px;margin-right:12px;font-weight:800}
+  .who{font-size:34px;color:var(--muted)}
+  .who b{color:var(--blue)}
+  .ratingbox{position:absolute;right:120px;top:110px;background:#fff;border-radius:30px;padding:36px 44px;box-shadow:0 14px 40px rgba(11,31,77,.12);text-align:center}
+  .ratingbox .num{font-size:110px;font-weight:800;color:var(--ink);line-height:1}
+  .ratingbox .stars{font-size:44px;letter-spacing:3px;margin:8px 0}
+  .ratingbox .cnt{font-size:26px;color:var(--muted)}
+  .ratingbox .g{display:flex;align-items:center;justify-content:center;gap:10px;font-size:24px;font-weight:600;color:var(--muted);margin-top:14px}
+  .ratingbox .g i{font-style:normal;font-weight:800;font-size:30px}
+  .ratingbox .g i:nth-child(1){color:#4285F4}.ratingbox .g i:nth-child(2){color:#EA4335}.ratingbox .g i:nth-child(3){color:#FBBC05}.ratingbox .g i:nth-child(4){color:#4285F4}.ratingbox .g i:nth-child(5){color:#34A853}.ratingbox .g i:nth-child(6){color:#EA4335}
+
+  /* promo */
+  .promo .pad{display:flex;flex-direction:column;justify-content:center;gap:34px;max-width:1150px}
+  .promo .lead{color:#2d3d63;font-size:42px}
+  .promo .cta{font-size:34px;font-weight:600;color:var(--blue);display:flex;align-items:center;gap:16px}
+
+  /* values */
+  .values{background:var(--blue-deep);color:#fff}
+  .values .pad{display:flex;flex-direction:column;justify-content:center;gap:40px}
+  .values .eyebrow{background:rgba(255,255,255,.12);color:#bcd0ff}
+  .values h2{color:#fff}
+  .values .lead{color:#c5d4ff}
+  .values .row{display:flex;gap:22px;margin-top:10px}
+  .values .v{flex:1;background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.14);border-radius:26px;padding:34px 20px;text-align:center;font-size:36px;font-weight:700}
+  .values .v small{display:block;font-size:60px;margin-bottom:12px}
+
+  /* hours */
+  .hours{background:linear-gradient(160deg,#f7f9ff,#e9f0ff)}
+  .hours .pad{display:grid;grid-template-columns:1fr 560px;gap:80px;align-items:center}
+  .hours table{border-collapse:collapse;width:100%;margin-top:30px;font-size:40px}
+  .hours td{padding:22px 0;border-bottom:2px solid #d9e2ff}
+  .hours td:last-child{text-align:right;font-weight:700;color:var(--ink)}
+  .hours td:first-child{color:var(--muted);font-weight:500}
+  .hours .contact{margin-top:40px;font-size:40px;font-weight:700;color:var(--ink);line-height:1.5}
+  .hours .contact span{display:block;font-size:30px;font-weight:500;color:var(--muted)}
+  .qr{background:#fff;border-radius:34px;padding:40px;box-shadow:0 14px 40px rgba(11,31,77,.12);text-align:center}
+  .qr img{width:380px;height:380px;display:block;margin:0 auto}
+  .qr b{display:block;font-size:34px;font-weight:700;margin-top:20px;color:var(--ink)}
+  .qr span{display:block;font-size:24px;color:var(--muted);margin-top:4px}
+
+  /* locations */
+  .locations{background:radial-gradient(1000px 700px at 15% 85%,#1b5cff 0%,#0b1f4d 60%);color:#fff}
+  .locations .pad{display:flex;flex-direction:column;justify-content:center;gap:36px;padding-right:900px}
+  .locations .eyebrow{background:rgba(255,255,255,.12);color:#bcd0ff}
+  .locations h2{color:#fff}
+  .locations .lead{color:#dbe5ff}
+  .locations .states{display:flex;gap:22px}
+  .locations .st{background:rgba(255,255,255,.1);border-radius:24px;padding:26px 36px;font-size:30px;font-weight:600}
+  .locations .st b{display:block;font-size:52px;font-weight:800;color:#fff;line-height:1}
+  .locations img{position:absolute;right:140px;top:50%;transform:translateY(-50%);height:620px;filter:drop-shadow(0 30px 60px rgba(0,0,0,.45))}
+
+  /* ads */
+  .ad{background:#000}
+  .ad img,.ad video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+  .ad .pad{display:flex;flex-direction:column;justify-content:center;gap:32px;background:#fff;color:var(--ink)}
+  .ad .pad .lead{color:#2d3d63}
+  .adtag{position:absolute;top:28px;right:34px;font-size:20px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:#fff;background:rgba(0,0,0,.45);padding:8px 16px;border-radius:999px;z-index:3}
+
+  #hint{position:absolute;left:20px;top:20px;font-size:18px;color:#fff;background:rgba(0,0,0,.5);padding:8px 14px;border-radius:8px;z-index:9;display:none}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="slides"></div>
+  <div id="progress"></div>
+  <div id="bar">
+    <div class="brand">
+      <img src="assets/tooth.png" alt="">
+      <div><b>Dental <span>360</span></b><small id="barOffice"></small></div>
+    </div>
+    <div id="tickerwrap"><div id="ticker"></div></div>
+    <div id="clock">
+      <div><div class="time" id="time">--:--</div><div class="date" id="date"></div></div>
+      <div id="weather"></div>
+    </div>
+  </div>
+  <div id="hint"></div>
+</div>
+
+<script src="config.js"></script>
+<script>
+(function(){
+  const C = window.SIGNAGE, B = C.business;
+  const $ = s => document.querySelector(s);
+  const esc = s => String(s==null?"":s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));
+
+  /* ---------- fit 1920x1080 to the screen ---------- */
+  function fit(){
+    const s = Math.min(innerWidth/1920, innerHeight/1080);
+    $("#stage").style.transform = `translate(-50%,-50%) scale(${s})`;
+  }
+  addEventListener("resize", fit); fit();
+
+  /* ---------- clock ---------- */
+  function tick(){
+    const now = new Date();
+    const t = new Intl.DateTimeFormat("en-US",{hour:"numeric",minute:"2-digit",timeZone:B.timezone}).format(now);
+    const d = new Intl.DateTimeFormat("en-US",{weekday:"long",month:"long",day:"numeric",timeZone:B.timezone}).format(now);
+    $("#time").textContent = t; $("#date").textContent = d;
+  }
+  setInterval(tick, 1000); tick();
+
+  /* ---------- weather (Open-Meteo, no key needed) ---------- */
+  const WX = {0:"☀️",1:"🌤️",2:"⛅",3:"☁️",45:"🌫️",48:"🌫️",51:"🌦️",53:"🌦️",55:"🌧️",56:"🌧️",57:"🌧️",61:"🌧️",63:"🌧️",65:"🌧️",66:"🌧️",67:"🌧️",71:"🌨️",73:"🌨️",75:"❄️",77:"🌨️",80:"🌦️",81:"🌧️",82:"⛈️",85:"🌨️",86:"❄️",95:"⛈️",96:"⛈️",99:"⛈️"};
+  async function weather(){
+    if(!B.weather) return;
+    try{
+      const u = `https://api.open-meteo.com/v1/forecast?latitude=${B.lat}&longitude=${B.lon}&current=temperature_2m,weather_code&temperature_unit=fahrenheit&timezone=${encodeURIComponent(B.timezone)}`;
+      const r = await fetch(u); const j = await r.json();
+      const c = j.current;
+      $("#weather").innerHTML = `<span class="ico">${WX[c.weather_code]||"🌡️"}</span><span>${Math.round(c.temperature_2m)}°</span>`;
+    }catch(e){ /* leave blank */ }
+  }
+  weather(); setInterval(weather, 15*60*1000);
+
+  /* ---------- ticker ---------- */
+  $("#barOffice").textContent = B.office;
+  (function ticker(){
+    const el = $("#ticker");
+    const html = C.ticker.map(t=>`<span>${esc(t)}</span>`).join("");
+    el.innerHTML = html + html;              // doubled for a seamless loop
+    const w = el.scrollWidth/2;
+    const speed = 140;                        // px per second
+    let x = $("#tickerwrap").clientWidth, last = performance.now();
+    (function step(now){
+      x -= (now-last)/1000*speed; last = now;
+      if(x < -w) x += w;
+      el.style.transform = `translateX(${x}px)`;
+      requestAnimationFrame(step);
+    })(last);
+  })();
+
+  /* ---------- slide builders ---------- */
+  const starStr = n => "★".repeat(Math.round(n)) + "☆".repeat(5-Math.round(n));
+  let tipI = 0, revI = 0;
+  const T = {
+    welcome: () => `
+      <div class="bg-photo" style="background-image:url(assets/photo-dentist.jpg)"></div><div class="wash"></div>
+      <div class="pad">
+        <div class="logo in"><img src="assets/tooth.png" alt=""><b>${esc(B.name)}</b></div>
+        <div class="office in">${esc(B.office)}</div>
+        <h1 class="in">Welcome!</h1>
+        <div class="lead in">${esc(B.tagline)}</div>
+        <div class="chips in"><span class="chip">${esc(B.yearsInBusiness)} years serving Chicago</span><span class="chip alt">New patients welcome</span><span class="chip alt">Families &amp; kids</span></div>
+      </div>`,
+    services: () => `
+      <div class="pad">
+        <span class="eyebrow in">What we do</span>
+        <h2 class="in">Complete care for the whole family</h2>
+        <div class="grid in">${C.services.map(s=>`<div class="card"><div class="ico">${s.icon}</div><h3>${esc(s.title)}</h3><p>${esc(s.text)}</p></div>`).join("")}</div>
+      </div>`,
+    tip: () => { const t = C.tips[tipI++ % C.tips.length]; return `
+      <img src="assets/tooth.png" alt="">
+      <div class="pad">
+        <span class="eyebrow in">Healthy smile tip</span>
+        <h2 class="in">${esc(t.title)}</h2>
+        <div class="lead in">${esc(t.text)}</div>
+      </div>`; },
+    reviews: () => { const r = C.reviews[revI++ % C.reviews.length]; const R = B.rating; return `
+      <div class="pad">
+        <span class="eyebrow in">What our patients say</span>
+        <div class="stars in">★★★★★</div>
+        <div class="quote in">${esc(r.text)}</div>
+        <div class="who in">— <b>${esc(r.name)}</b>, Dental 360 patient</div>
+      </div>
+      ${R && R.stars ? `<div class="ratingbox in"><div class="num">${esc(R.stars)}</div><div class="stars">${starStr(R.stars)}</div><div class="cnt">${esc(R.count)} reviews</div><div class="g"><i>G</i><i>o</i><i>o</i><i>g</i><i>l</i><i>e</i>&nbsp;rating</div></div>` : ""}`; },
+    promo: s => `
+      <div class="bg-photo" style="background-image:url(${esc(s.photo||"assets/photo-dentist.jpg")});background-position:${esc(s.photoPosition||"center")}"></div><div class="wash"></div>
+      <div class="pad">
+        <span class="eyebrow in">${esc(s.eyebrow||"")}</span>
+        <h2 class="in">${esc(s.title||"")}</h2>
+        <div class="lead in">${esc(s.text||"")}</div>
+        <div class="cta in">💬 Ask our front desk today or call ${esc(B.phone)}</div>
+      </div>`,
+    values: () => { const icons = ["🤝","🛡️","💙","🏘️","⭐"]; return `
+      <div class="pad">
+        <span class="eyebrow in">Why families choose Dental 360</span>
+        <h2 class="in">Personalized care. Transparent pricing.</h2>
+        <div class="lead in">Our purpose is to improve community health by providing the best possible oral care at reasonable prices — building relationships that last generations.</div>
+        <div class="row in">${C.values.map((v,i)=>`<div class="v"><small>${icons[i%icons.length]}</small>${esc(v)}</div>`).join("")}</div>
+      </div>`; },
+    hours: () => `
+      <div class="pad">
+        <div>
+          <span class="eyebrow in">Hours &amp; contact</span>
+          <h2 class="in">We're here when you need us</h2>
+          <table class="in">${C.hours.map(h=>`<tr><td>${esc(h.day)}</td><td>${esc(h.time)}</td></tr>`).join("")}</table>
+          <div class="contact in">📞 ${esc(B.phone)}<span>📍 ${esc(B.address1)}, ${esc(B.address2)}</span></div>
+        </div>
+        <div class="qr in"><img src="assets/qr-book.svg" alt="QR code"><b>Scan to book online</b><span>${esc(B.website)}</span></div>
+      </div>`,
+    locations: () => `
+      <img src="assets/tooth.png" alt="">
+      <div class="pad">
+        <span class="eyebrow in">One family, many neighborhoods</span>
+        <h2 class="in">Over 20 locations near you</h2>
+        <div class="lead in">Your records travel with you — visit any Dental 360 office across Chicagoland, Wisconsin and Northwest Indiana.</div>
+        <div class="states in"><div class="st"><b>IL</b>Illinois</div><div class="st"><b>WI</b>Wisconsin</div><div class="st"><b>IN</b>Indiana</div></div>
+      </div>`,
+    ad: a => {
+      if(a.type==="image") return `<span class="adtag">Sponsored</span><img src="${esc(a.src)}" alt="">`;
+      if(a.type==="video") return `<span class="adtag">Sponsored</span><video src="${esc(a.src)}" muted autoplay playsinline></video>`;
+      return `<span class="adtag" style="color:#0b1f4d;background:#eef3ff">Sponsored</span><div class="pad">
+        <span class="eyebrow in">${esc(a.eyebrow||"Neighborhood partner")}</span>
+        <h2 class="in">${esc(a.title||"")}</h2>
+        <div class="lead in">${esc(a.text||"")}</div>
+        <div class="cta in" style="font-size:34px;font-weight:600;color:#0048FE">${esc(a.footer||"")}</div></div>`;
+    }
+  };
+
+  /* ---------- playlist: content slides with ads interleaved ---------- */
+  function playlist(){
+    const out = []; let adI = 0, n = 0;
+    for(const s of C.slides){
+      out.push(s); n++;
+      if(C.ads.length && C.adEvery>0 && n % C.adEvery === 0){ out.push({type:"ad", ad:C.ads[adI++ % C.ads.length]}); }
+    }
+    return out;
+  }
+  const list = playlist();
+  const slidesEl = $("#slides"), prog = $("#progress");
+  let i = -1, timer = null, current = null, paused = false;
+
+  function show(step=1){
+    clearTimeout(timer);
+    i = (i + step + list.length) % list.length;
+    const s = list[i];
+    const el = document.createElement("div");
+    const isAd = s.type==="ad";
+    el.className = "slide " + (isAd ? "ad" : s.type);
+    const builder = isAd ? T.ad : T[s.type];
+    el.innerHTML = builder ? builder(isAd ? s.ad : s) : `<div class="pad"><h2>Unknown slide type: ${esc(s.type)}</h2></div>`;
+    slidesEl.appendChild(el);
+    requestAnimationFrame(()=>requestAnimationFrame(()=>el.classList.add("active")));
+    const old = current; current = el;
+    if(old){ old.classList.remove("active"); setTimeout(()=>old.remove(), 1000); }
+
+    let secs = (isAd ? s.ad.seconds : s.seconds) || C.defaultSeconds;
+    const vid = el.querySelector("video");
+    if(vid){ vid.onended = ()=>!paused && show(1); vid.onerror = ()=>show(1); secs = 600; }
+    prog.style.transition = "none"; prog.style.width = "0";
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{ prog.style.transition = `width ${secs}s linear`; prog.style.width = "100%"; }));
+    $("#hint").textContent = `${i+1}/${list.length} · ${s.type}${isAd?" ("+s.ad.type+")":""}${paused?" · PAUSED":""}`;
+    if(!paused) timer = setTimeout(()=>show(1), secs*1000);
+  }
+
+  /* ---------- keyboard: → next, ← back, space pause, h hint ---------- */
+  addEventListener("keydown", e=>{
+    if(e.key==="ArrowRight") show(1);
+    else if(e.key==="ArrowLeft") show(-1);
+    else if(e.key===" "){ paused=!paused; if(!paused) show(1); else clearTimeout(timer); e.preventDefault(); }
+    else if(e.key.toLowerCase()==="h"){ const h=$("#hint"); h.style.display = h.style.display==="block"?"none":"block"; }
+  });
+  const q = new URLSearchParams(location.search);
+  if(q.has("debug")) $("#hint").style.display = "block";
+  if(q.has("slide")){ const idx = list.findIndex(s=>s.type===q.get("slide")); if(idx>=0) i = idx-1; }
+
+  /* ---------- periodic reload so config edits reach the TV ---------- */
+  setTimeout(()=>location.reload(), (C.reloadEveryHours||4)*3600*1000);
+
+  // preload photos then start
+  const imgs = ["assets/tooth.png","assets/photo-dentist.jpg","assets/photo-smile.jpg","assets/photo-patient.jpg"].map(src=>new Promise(r=>{const im=new Image();im.onload=im.onerror=r;im.src=src;}));
+  Promise.race([Promise.all(imgs), new Promise(r=>setTimeout(r,2500))]).then(()=>show(1));
+})();
+</script>
+</body>
+</html>
