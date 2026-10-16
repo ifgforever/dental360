@@ -194,6 +194,59 @@ Ads are tagged "Sponsored" in the corner. Leave the list empty for no ads.
 GitHub Pages on a private repository needs a paid GitHub plan. On a free plan,
 make the repository public. Everything in it is lobby content anyway.
 
+## Choosing the player box
+
+The player is the small box behind the TV that runs the screen. Pick one that
+starts the screen on its own after a power cut and that you can check remotely.
+
+| Player | Price | Best for |
+|---|---|---|
+| **BrightSign LS425** (1080p) or **LS445** (4K). Add **W** for built-in Wi-Fi | about $250–$355 | Recommended. Built for signage, boots straight into the screen, no apps or pop-ups, free remote status and reboot at control.bsn.cloud |
+| **onn 4K Pro** (Google TV, Walmart) + **Fully Kiosk Browser** Plus licence | about $50 + about €6–8 one-time | Budget. Has an Ethernet port. Needs more setup and occasional OS updates |
+| Amazon **Fire TV Stick 4K Select** or newer Fire TV Sticks | — | **Avoid.** They run Vega OS and can't install Fully Kiosk or other outside apps |
+| The TV's own web browser | — | Avoid. Doesn't restart the screen on its own |
+
+BrightSign isn't a full web browser, so test the screen on the first unit
+before buying more.
+
+**BrightSign setup.** Register the player at control.bsn.cloud. Create a
+presentation with one full-screen HTML5 zone whose source is the screen's
+address, including `?screen=NAME`. Publish it to the player.
+
+**onn / Google TV setup.** Install Fully Kiosk Browser and buy the Plus licence.
+Set the Start URL to the screen's address, then turn on *Launch on boot*,
+*Keep screen on* and *Kiosk mode*. A launcher such as Projectivy Launcher
+can start Fully every time the box powers on. Turn off the box's screensaver
+and sleep settings.
+
+## Install checklist (do this at every TV)
+
+Do all of these before you leave. The goal is that nobody at the office ever
+touches the box.
+
+1. **Power the player from a wall outlet**, not the TV's USB port. Then it's
+   already running when someone turns the TV on.
+2. **Use wired Ethernet if there's a jack.** Otherwise use the office Wi-Fi
+   and write down the network name.
+3. **TV settings:** set the power-on input to the player's HDMI port, or
+   "last input" while on that port. Turn on HDMI-CEC (Anynet+, Bravia Sync,
+   SimpLink and similar). Turn off eco mode, sleep timers and "auto off when
+   no signal".
+4. **Unplug the player's power, plug it back in, and don't touch anything.**
+   The screen must come back by itself within about 2 minutes.
+5. **Turn the TV off and on with its remote.** It must land on the screen.
+6. **Unplug the internet and restart the player.** The screen must still play
+   from its saved copy. Then plug the internet back in.
+7. **Check Healthchecks.io shows the TV as up.** Check the smart plug, if you
+   used one, shows the TV drawing power.
+
+**Offline copy.** After the first start the TV keeps a copy of everything it
+needs: the page, settings, office slides, pictures, fonts and the last
+headlines. If the internet is down, even right after a power cut, it plays that
+copy. When the internet returns it fetches the latest content again.
+Weather and new headlines need the internet. Bump `CACHE` in `sw.js` if you
+ever replace a file in `assets/` under the same name.
+
 ## Put it on the TV
 
 Any device with a web browser works. Point it at the Pages address, make it
@@ -231,6 +284,7 @@ the better choice.
 | File | Purpose |
 |------|---------|
 | `index.html` | The player: layout, styling, slide templates, clock, weather, ticker |
+| `sw.js` | Offline copy so the screen starts even when the internet is down |
 | `admin.html` | "Manage Lobby Screen" page for the office: uploads, announcements, ticker, hours |
 | `content.json` | What the office saved from the manage page (written by `admin.html`) |
 | `uploads/` | Pictures and videos the office uploaded |

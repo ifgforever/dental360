@@ -203,8 +203,10 @@
 (async function(){
   const C = window.SIGNAGE;
   /* ---------- office-managed content (content.json, written by admin.html) ---------- */
+  // timeout helper that also works on older signage players (no AbortSignal.timeout there)
+  function timeoutSignal(ms){ if(typeof AbortController === "undefined") return undefined; const c = new AbortController(); setTimeout(()=>c.abort(), ms); return c.signal; }
   async function getText(url){
-    try{ const r = await fetch(url + "?t=" + Date.now(), {cache:"no-store", signal: AbortSignal.timeout(5000)}); return r.ok ? await r.text() : null; }
+    try{ const r = await fetch(url + "?t=" + Date.now(), {cache:"no-store", signal: timeoutSignal(5000)}); return r.ok ? await r.text() : null; }
     catch(e){ return null; }
   }
   const contentText = await getText("content.json");
@@ -306,7 +308,7 @@
     const per = N.perFeed || 4, got = [];
     await Promise.all((N.feeds||[]).map(async f => {
       try{
-        const r = await fetch("https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent(f.url), {signal: AbortSignal.timeout(15000)});
+        const r = await fetch("https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent(f.url), {signal: timeoutSignal(15000)});
         const j = await r.json();
         const items = (j.items||[]).map(it => ({ source: f.name, title: it.title||"", time: new Date(it.pubDate||0).getTime()||0 }));
         got.push(clean(items).sort((a,b)=>b.time-a.time).slice(0, per));
@@ -533,6 +535,14 @@
   setInterval(checkIn, (M.everyMinutes || 5) * 60000);
   // watchdog: if a slide gets stuck (frozen video, browser hiccup), report it and restart the page
   setInterval(()=>{ if(!paused && Date.now() > stats.nextDue + 60000){ ping("fail", "slideshow froze; restarting the page"); stats.nextDue = Date.now() + 120000; setTimeout(safeReload, 2000); } }, 30000);
+
+  // keep a copy of the screen on the device so it starts even when the internet is down
+  if("serviceWorker" in navigator && location.protocol !== "file:"){
+    const firstInstall = !navigator.serviceWorker.controller;
+    // on the very first start, refresh once so fonts and pictures load through the offline copy too
+    navigator.serviceWorker.addEventListener("controllerchange", () => { if(firstInstall) setTimeout(safeReload, 3000); });
+    navigator.serviceWorker.register("sw.js").catch(()=>{});
+  }
 
   // preload photos then start
   const imgs = ["assets/tooth.png","assets/photo-dentist.jpg","assets/photo-smile.jpg","assets/photo-patient.jpg"].map(src=>new Promise(r=>{const im=new Image();im.onload=im.onerror=r;im.src=src;}));
