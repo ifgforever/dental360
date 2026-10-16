@@ -1,5 +1,5 @@
 // Pulls Chicago headlines from the RSS feeds listed in config.js and writes news.json.
-// Runs in GitHub Actions every 30 minutes (see .github/workflows/news.yml).
+// Runs in GitHub Actions every 30 minutes, right before each publish (see .github/workflows/pages.yml).
 // Usage: node scripts/build-news.mjs   (needs Node 18+, no packages)
 import { readFileSync, writeFileSync } from "node:fs";
 

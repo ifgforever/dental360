@@ -25,11 +25,51 @@ Handy keys while testing: **→** next slide, **←** previous, **Space** pause,
 **H** show the slide counter. Add `?slide=hours` to the address to start on a
 given slide, or `?debug` to show the counter from the start.
 
+## Let the office manage it themselves
+
+`admin.html` is a simple "Manage Lobby Screen" page for the office staff. It
+works on a computer or a phone and needs no coding:
+
+    https://ifgforever.github.io/dental360/admin.html
+
+- **Your slides.** Drag in pictures, flyers or short MP4 videos, or type a text
+  announcement such as holiday hours. Each slide gets its own on/off switch,
+  seconds on screen, and optional start and stop dates, so a promo can turn
+  itself off when it ends. Pictures are resized automatically.
+- **Scrolling messages** and **office hours** can be edited, added or removed.
+- **Screen settings** turn the Chicago headlines and the built-in Dental 360
+  slides on or off, and set how often the office's own slides play.
+- **Publish to TV** saves everything at once. The TV checks for changes every
+  few minutes and refreshes itself, usually within 5–10 minutes.
+
+**One-time connection.** The first time, the page asks for an access key. It
+walks you through making one on GitHub: a fine-grained token limited to this
+one repository with **Contents: Read and write**. The key is stored only in that
+computer's browser, and "Disconnect this computer" removes it. Without a key the
+page can't change anything, so it's fine that the address is public.
+
+Under the hood each Publish is one commit that updates `content.json` and adds
+or removes files in `uploads/`. Once the office has published, their ticker
+messages and hours take priority over the ones in `config.js`.
+
+Only use patient photos with the patient's written permission.
+
+## Handing it over (sold outright)
+
+1. The office makes a free GitHub account.
+2. In this repo go to **Settings → General → Transfer ownership** and transfer it
+   to their account. Their screen address becomes
+   `https://THEIR-ACCOUNT.github.io/dental360/`, and the manage page finds the
+   new location on its own.
+3. Point the TV at the new address and help them create their access key.
+
 ## Change the words, hours, phone, tips, reviews
 
-Everything lives in one file: **`config.js`**. Open it, change the text inside
-the quotes, save. No coding needed. The TV reloads itself every 4 hours, or
-press **F5** on the TV device to see the change right away.
+Day-to-day content is easiest through the manage page above. Everything else
+lives in one file: **`config.js`**. Open it, change the text inside the quotes,
+save. No coding needed. The TV notices the change within a few minutes and
+refreshes itself. It never refreshes while the internet is down, so the screen
+keeps playing.
 
 - `business` — office name, address, phone, booking link, Google rating
 - `hours` — opening hours table
@@ -57,9 +97,8 @@ is dropped. Headlines with words like "shooting", "killed" or "crash" are
 filtered out so the lobby screen stays calm. Edit `skipWords` in `config.js`
 to change that.
 
-**How it updates.** GitHub runs `scripts/build-news.mjs` every 30 minutes
-(the "Refresh Chicago headlines" workflow) and saves the results to
-`news.json`. The TV re-reads it every 15 minutes. If `news.json` is missing or
+**How it updates.** Every 30 minutes the publish workflow runs
+`scripts/build-news.mjs` and publishes fresh headlines in `news.json`. The TV re-reads it every 15 minutes. If `news.json` is missing or
 more than 12 hours old, the TV reads the feeds directly through a free RSS
 service instead. If the internet is down, the ticker shows your own messages.
 
@@ -94,7 +133,10 @@ Ads are tagged "Sponsored" in the corner. Leave the list empty for no ads.
 2. Under **Build and deployment → Source** choose **GitHub Actions**.
 3. Push any change (or run the "Publish signage to GitHub Pages" workflow from
    the Actions tab). About a minute later the address above is live, and every
-   later push updates the TV automatically.
+   later save updates the TV automatically.
+
+GitHub Pages on a private repository needs a paid GitHub plan. On a free plan,
+make the repository public. Everything in it is lobby content anyway.
 
 ## Put it on the TV
 
@@ -133,12 +175,14 @@ the better choice.
 | File | Purpose |
 |------|---------|
 | `index.html` | The player: layout, styling, slide templates, clock, weather, ticker |
-| `config.js` | Everything you'd want to edit: text, hours, slide order, ads |
+| `admin.html` | "Manage Lobby Screen" page for the office: uploads, announcements, ticker, hours |
+| `content.json` | What the office saved from the manage page (written by `admin.html`) |
+| `uploads/` | Pictures and videos the office uploaded |
+| `config.js` | Built-in content and settings: text, hours, slide order, ads, news feeds |
 | `assets/` | Logo, tooth graphic, photos, QR code (`qr-book.svg` points to the online booking page) |
 | `news.json` | Latest Chicago headlines, refreshed automatically |
 | `scripts/build-news.mjs` | Fetches the headlines into `news.json` |
-| `.github/workflows/news.yml` | Runs the headline refresh every 30 minutes |
-| `.github/workflows/pages.yml` | Publishes to GitHub Pages on each push (skips until Pages is on) |
+| `.github/workflows/pages.yml` | Publishes on every save and every 30 minutes with fresh headlines (skips until Pages is on) |
 
 Weather comes from Open-Meteo (free, no account needed). If the TV has no
 internet the clock still works and the weather chip simply stays hidden.

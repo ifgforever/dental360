@@ -1,0 +1,455 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Manage Lobby Screen</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="assets/tooth.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap">
+<style>
+  :root{--blue:#0048FE;--deep:#0b1f4d;--ink:#14213d;--muted:#5a6b8c;--line:#dbe3f5;--bg:#f4f7fd;--card:#fff;--red:#d92d20;--green:#12805c;--warn:#b54708}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Poppins,"Segoe UI",Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink);font-size:16px;line-height:1.45;padding-bottom:110px}
+  header{background:var(--deep);color:#fff;padding:18px 24px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  header img{height:44px}
+  header h1{font-size:20px;margin:0;font-weight:700}
+  header h1 small{display:block;font-size:13px;font-weight:500;color:#a9bdf5}
+  header .sp{flex:1}
+  header a{color:#cfdcff;font-size:14px}
+  main{max-width:1080px;margin:0 auto;padding:24px 16px}
+  section{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px;margin-bottom:20px}
+  h2{font-size:19px;margin:0 0 4px}
+  .sub{color:var(--muted);font-size:14px;margin:0 0 16px}
+  label{font-size:13px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px}
+  input[type=text],input[type=password],input[type=number],input[type=date],textarea,select{width:100%;font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink)}
+  textarea{min-height:90px;resize:vertical}
+  input:focus,textarea:focus,select:focus{outline:2px solid var(--blue);outline-offset:0;border-color:transparent}
+  button{font:inherit;font-weight:600;font-size:15px;border:0;border-radius:10px;padding:10px 16px;cursor:pointer;background:#e8eefc;color:var(--blue)}
+  button:hover{filter:brightness(.96)}
+  button.primary{background:var(--blue);color:#fff}
+  button.danger{background:#fdecea;color:var(--red)}
+  button.ghost{background:transparent;padding:6px 8px}
+  button:disabled{opacity:.5;cursor:default}
+  .row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+  .row > *{flex:1;min-width:160px}
+  .steps{margin:8px 0 16px;padding-left:20px;color:var(--ink)}
+  .steps li{margin-bottom:6px}
+  .note{font-size:13px;color:var(--muted)}
+  .msg{padding:12px 14px;border-radius:10px;font-size:14px;margin-top:12px}
+  .msg.err{background:#fdecea;color:var(--red)} .msg.ok{background:#e7f6ef;color:var(--green)} .msg.info{background:#eef3ff;color:var(--blue)}
+  #drop{border:2px dashed #9fb4ea;border-radius:14px;padding:28px 16px;text-align:center;background:#f7f9ff;cursor:pointer}
+  #drop.over{background:#e6edff;border-color:var(--blue)}
+  #drop b{display:block;font-size:17px;margin-bottom:4px}
+  .addbar{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+  #slides{display:grid;gap:14px;margin-top:18px}
+  .slidecard{display:grid;grid-template-columns:200px 1fr;gap:16px;border:1px solid var(--line);border-radius:14px;padding:14px;background:#fff}
+  .slidecard.off{opacity:.55}
+  .thumb{width:200px;aspect-ratio:16/9;border-radius:10px;background:#0b1f4d center/cover no-repeat;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;color:#fff;text-align:center;font-size:13px;padding:8px}
+  .thumb img,.thumb video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000}
+  .thumb .badge{position:absolute;left:6px;top:6px;background:rgba(0,0,0,.6);color:#fff;font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;z-index:2;text-transform:uppercase;letter-spacing:.5px}
+  .thumb .new{left:auto;right:6px;background:var(--green)}
+  .fields{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+  .fields > *{min-width:0}
+  .fields textarea{min-height:46px;height:46px}
+  .fields .wide{grid-column:1/-1}
+  .fields .half{grid-column:span 2}
+  .cardtools{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:10px}
+  .cardtools .sp{flex:1}
+  .switch{display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:var(--ink);cursor:pointer;margin:0}
+  .switch input{width:20px;height:20px;accent-color:var(--blue)}
+  .listrow{display:flex;gap:8px;margin-bottom:8px}
+  .listrow input{flex:1}
+  .hoursrow input:first-child{flex:0 0 40%}
+  .empty{color:var(--muted);font-size:14px;padding:16px;text-align:center;border:1px dashed var(--line);border-radius:12px}
+  #bar{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);box-shadow:0 -6px 24px rgba(11,31,77,.08);padding:14px 16px;z-index:10}
+  #bar .in{max-width:1080px;margin:0 auto;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+  #status{flex:1;font-size:14px;color:var(--muted);min-width:200px}
+  #status.dirty{color:var(--warn);font-weight:600}
+  #publish{font-size:17px;padding:13px 26px}
+  .hidden{display:none !important}
+  dialog{border:0;border-radius:16px;padding:24px;max-width:560px;width:calc(100% - 32px)}
+  dialog::backdrop{background:rgba(11,31,77,.45)}
+  @media (max-width:720px){
+    .slidecard{grid-template-columns:minmax(0,1fr)}
+    .thumb{width:100%}
+    .fields{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .fields .half{grid-column:1/-1}
+    header h1{font-size:18px}
+  }
+</style>
+</head>
+<body>
+<header>
+  <img src="assets/tooth.png" alt="">
+  <h1>Manage Lobby Screen<small id="officeName">Dental 360</small></h1>
+  <span class="sp"></span>
+  <a href="index.html" target="_blank" rel="noopener">Open the TV view ↗</a>
+  <a href="#" id="disconnect" class="hidden">Disconnect this computer</a>
+</header>
+
+<main>
+  <!-- ============ CONNECT ============ -->
+  <section id="connect" class="hidden">
+    <h2>Connect this computer</h2>
+    <p class="sub">You only do this once per computer. The access key stays on this computer and lets this page save changes to your screen.</p>
+    <ol class="steps">
+      <li>Sign in to GitHub, then open <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">New access key (fine-grained token)</a>.</li>
+      <li>Name it <b>Lobby screen</b> and set Expiration to the longest option.</li>
+      <li>Under <b>Repository access</b> pick <b>Only select repositories</b> and choose <b id="repoNameHint">dental360</b>.</li>
+      <li>Under <b>Permissions → Repository permissions</b> set <b>Contents</b> to <b>Read and write</b>.</li>
+      <li>Click <b>Generate token</b>, copy it, and paste it below.</li>
+    </ol>
+    <div class="row">
+      <div style="flex:3"><label for="token">Access key</label><input id="token" type="password" placeholder="github_pat_…" autocomplete="off"></div>
+    </div>
+    <details style="margin-top:12px"><summary class="note">Advanced: repository details</summary>
+      <div class="row" style="margin-top:10px">
+        <div><label for="owner">GitHub owner</label><input id="owner" type="text"></div>
+        <div><label for="repo">Repository</label><input id="repo" type="text"></div>
+        <div><label for="branch">Branch (blank = default)</label><input id="branch" type="text"></div>
+      </div>
+    </details>
+    <div class="addbar"><button class="primary" id="connectBtn">Connect</button></div>
+    <div id="connectMsg"></div>
+  </section>
+
+  <!-- ============ EDITOR ============ -->
+  <div id="editor" class="hidden">
+    <section>
+      <h2>Your slides</h2>
+      <p class="sub">Pictures, flyers, short videos and announcements you add here play on the lobby TV. Changes reach the TV about 5–10 minutes after you click <b>Publish</b>.</p>
+      <div id="drop" tabindex="0" role="button">
+        <b>Drop pictures or videos here</b>
+        <span class="note">or click to choose files · JPG, PNG, GIF, MP4 · landscape 1920×1080 looks best</span>
+        <input id="file" type="file" accept="image/*,video/mp4,video/webm" multiple hidden>
+      </div>
+      <div class="addbar">
+        <button id="addText">＋ Add a text announcement</button>
+      </div>
+      <div id="uploadMsg"></div>
+      <div id="slides"></div>
+    </section>
+
+    <section>
+      <h2>Scrolling messages</h2>
+      <p class="sub">The messages that scroll along the bottom of the screen, between Chicago headlines.</p>
+      <div id="ticker"></div>
+      <button id="addTicker">＋ Add message</button>
+    </section>
+
+    <section>
+      <h2>Office hours</h2>
+      <p class="sub">Shown on the hours slide.</p>
+      <div id="hours"></div>
+      <button id="addHours">＋ Add row</button>
+    </section>
+
+    <section>
+      <h2>Screen settings</h2>
+      <div style="display:grid;gap:14px">
+        <label class="switch"><input type="checkbox" id="showBuiltIn"> Show the built-in Dental 360 slides (services, reviews, tips, hours…)</label>
+        <label class="switch"><input type="checkbox" id="showNews"> Show Chicago news headlines</label>
+        <div style="max-width:420px"><label for="uploadEvery">How often your slides play</label>
+          <select id="uploadEvery">
+            <option value="1">After every built-in slide</option>
+            <option value="2">After every 2 built-in slides</option>
+            <option value="3">After every 3 built-in slides</option>
+            <option value="4">After every 4 built-in slides</option>
+            <option value="6">After every 6 built-in slides</option>
+          </select>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <section id="loading"><p class="sub" style="margin:0">Loading…</p></section>
+</main>
+
+<div id="bar" class="hidden"><div class="in">
+  <div id="status">No changes yet.</div>
+  <button id="discard" class="ghost">Undo changes</button>
+  <button id="publish" class="primary" disabled>Publish to TV</button>
+</div></div>
+
+<dialog id="textDlg">
+  <h2>Text announcement</h2>
+  <p class="sub">Big, simple message on a Dental 360 blue background. Good for holiday hours, specials and reminders.</p>
+  <div style="display:grid;gap:12px">
+    <div><label for="tTitle">Headline</label><input id="tTitle" type="text" maxlength="60" placeholder="Closed Thanksgiving Day"></div>
+    <div><label for="tText">Message</label><textarea id="tText" maxlength="240" placeholder="We'll reopen Friday at 9:00 AM. Happy Thanksgiving from all of us!"></textarea></div>
+  </div>
+  <div class="addbar" style="justify-content:flex-end">
+    <button id="tCancel" class="ghost">Cancel</button>
+    <button id="tSave" class="primary">Add slide</button>
+  </div>
+</dialog>
+
+<script src="config.js"></script>
+<script>
+(function(){
+  const C = window.SIGNAGE || {}, $ = s => document.querySelector(s);
+  const esc = s => String(s==null?"":s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
+  const store = { get(k){ try{ return localStorage.getItem("signage."+k) || ""; }catch(e){ return ""; } },
+                  set(k,v){ try{ v ? localStorage.setItem("signage."+k, v) : localStorage.removeItem("signage."+k); }catch(e){} } };
+  $("#officeName").textContent = [C.business && C.business.name, C.business && C.business.office].filter(Boolean).join(" · ");
+
+  /* ---------- where is the repo? ---------- */
+  function detectRepo(){
+    const h = location.hostname;
+    if(h.endsWith(".github.io")){
+      const owner = h.split(".")[0], first = location.pathname.split("/").filter(Boolean)[0];
+      const repo = first && !first.includes(".") ? first : `${owner}.github.io`;
+      return { owner, repo };
+    }
+    return C.github || { owner:"", repo:"" };
+  }
+  const det = detectRepo();
+  const cfg = { token: store.get("token"), owner: store.get("owner") || det.owner, repo: store.get("repo") || det.repo, branch: store.get("branch") };
+  $("#owner").value = cfg.owner; $("#repo").value = cfg.repo; $("#branch").value = cfg.branch;
+  $("#repoNameHint").textContent = cfg.repo || "your signage repository";
+
+  /* ---------- GitHub API ---------- */
+  async function gh(path, opts = {}){
+    const r = await fetch("https://api.github.com" + path, { method: opts.method || "GET",
+      headers: { Authorization: "Bearer " + cfg.token, Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28",
+                 ...(opts.body ? {"Content-Type":"application/json"} : {}) },
+      body: opts.body ? JSON.stringify(opts.body) : undefined });
+    if(!r.ok){ let m = ""; try{ m = (await r.json()).message || ""; }catch(e){} const e = new Error(m || ("HTTP " + r.status)); e.status = r.status; throw e; }
+    return r.status === 204 ? null : r.json();
+  }
+  const repoPath = () => `/repos/${encodeURIComponent(cfg.owner)}/${encodeURIComponent(cfg.repo)}`;
+  const branchPath = () => cfg.branch.split("/").map(encodeURIComponent).join("/");
+  const friendly = e => e.status === 401 ? "That access key isn't valid or has expired. Make a new one and connect again."
+    : e.status === 403 ? "The access key can't save changes. Check that Contents is set to Read and write."
+    : e.status === 404 ? "Couldn't find the repository. Check that the key has access to it, or fix the repository details under Advanced."
+    : (e.message || "Something went wrong.") ;
+
+  /* ---------- state ---------- */
+  let state = null, saved = "", sha = null;
+  const pending = new Map();          // path -> { base64, url, blobSha }
+  const removed = new Set();          // previously published files to delete
+  const defaults = () => ({ showBuiltIn: true, showNews: !(C.news && C.news.enabled === false), uploadEvery: 3,
+    ticker: (C.ticker || []).slice(), hours: (C.hours || []).map(h => ({...h})), slides: [] });
+
+  function setDirty(){
+    const d = JSON.stringify(state) !== saved || pending.size || removed.size;
+    $("#publish").disabled = !d;
+    $("#status").className = d ? "dirty" : "";
+    $("#status").textContent = d ? "You have changes that aren't on the TV yet." : "Everything is published.";
+    return d;
+  }
+  addEventListener("beforeunload", e => { if(state && setDirty()){ e.preventDefault(); e.returnValue = ""; } });
+
+  /* ---------- connect + load ---------- */
+  async function load(){
+    $("#loading").classList.remove("hidden");
+    try{
+      const repo = await gh(repoPath());
+      if(!cfg.branch) cfg.branch = repo.default_branch;
+      let j = null; sha = null;
+      try{
+        const f = await gh(`${repoPath()}/contents/content.json?ref=${encodeURIComponent(cfg.branch)}`);
+        sha = f.sha;
+        const bytes = Uint8Array.from(atob(f.content.replace(/\n/g,"")), ch => ch.charCodeAt(0));
+        j = JSON.parse(new TextDecoder().decode(bytes));
+      }catch(e){ if(e.status !== 404) throw e; }
+      const d = defaults();
+      state = {
+        showBuiltIn: j && typeof j.showBuiltIn === "boolean" ? j.showBuiltIn : d.showBuiltIn,
+        showNews: j && typeof j.showNews === "boolean" ? j.showNews : d.showNews,
+        uploadEvery: (j && j.uploadEvery) || d.uploadEvery,
+        ticker: j && Array.isArray(j.ticker) && j.ticker.length ? j.ticker : d.ticker,
+        hours: j && Array.isArray(j.hours) && j.hours.length ? j.hours : d.hours,
+        slides: j && Array.isArray(j.slides) ? j.slides : []
+      };
+      saved = JSON.stringify(state); pending.clear(); removed.clear();
+      $("#connect").classList.add("hidden"); $("#editor").classList.remove("hidden");
+      $("#bar").classList.remove("hidden"); $("#disconnect").classList.remove("hidden");
+      render(); setDirty();
+    }catch(e){
+      showConnect(friendly(e));
+    }finally{ $("#loading").classList.add("hidden"); }
+  }
+  function showConnect(err){
+    $("#connect").classList.remove("hidden"); $("#editor").classList.add("hidden"); $("#bar").classList.add("hidden");
+    $("#connectMsg").innerHTML = err ? `<div class="msg err">${esc(err)}</div>` : "";
+  }
+  $("#connectBtn").onclick = () => {
+    cfg.token = $("#token").value.trim(); cfg.owner = $("#owner").value.trim(); cfg.repo = $("#repo").value.trim(); cfg.branch = $("#branch").value.trim();
+    if(!cfg.token) return showConnect("Paste the access key first.");
+    store.set("token", cfg.token); store.set("owner", cfg.owner); store.set("repo", cfg.repo); store.set("branch", cfg.branch);
+    load();
+  };
+  $("#disconnect").onclick = e => { e.preventDefault();
+    if(!confirm("Remove the access key from this computer? You'll need to paste it again to make changes here.")) return;
+    store.set("token", ""); cfg.token = ""; $("#token").value = ""; state = null; showConnect(); $("#disconnect").classList.add("hidden"); };
+
+  /* ---------- render ---------- */
+  const srcUrl = s => pending.has(s.src) ? pending.get(s.src).url : s.src;
+  const rawUrl = s => `https://raw.githubusercontent.com/${cfg.owner}/${cfg.repo}/${cfg.branch}/${s.src}`;
+  function render(){
+    $("#showBuiltIn").checked = state.showBuiltIn; $("#showNews").checked = state.showNews; $("#uploadEvery").value = String(state.uploadEvery);
+    const box = $("#slides");
+    if(!state.slides.length){ box.innerHTML = `<div class="empty">No slides yet. Drop a picture above or add a text announcement.</div>`; }
+    else box.innerHTML = state.slides.map((s, i) => {
+      const kind = s.kind || "image";
+      let thumb;
+      if(kind === "text") thumb = `<div class="thumb"><span class="badge">Text</span><div style="white-space:pre-line"><b>${esc(s.title)}</b>\n${esc((s.text||"").slice(0,80))}</div></div>`;
+      else if(kind === "video") thumb = `<div class="thumb"><span class="badge">Video</span>${pending.has(s.src)?'<span class="badge new">New</span>':''}<video src="${esc(srcUrl(s))}" muted preload="metadata" data-raw="${esc(rawUrl(s))}"></video></div>`;
+      else thumb = `<div class="thumb"><span class="badge">Picture</span>${pending.has(s.src)?'<span class="badge new">New</span>':''}<img src="${esc(srcUrl(s))}" alt="" data-raw="${esc(rawUrl(s))}"></div>`;
+      const textFields = kind === "text" ? `
+        <div class="half"><label>Headline</label><input type="text" data-i="${i}" data-k="title" maxlength="60" value="${esc(s.title)}"></div>
+        <div class="half"><label>Message</label><textarea data-i="${i}" data-k="text" maxlength="240">${esc(s.text)}</textarea></div>`
+        : `<div class="half"><label>Name (only you see this)</label><input type="text" data-i="${i}" data-k="title" value="${esc(s.title)}"></div>
+           ${kind === "image" ? `<div class="half"><label>Picture size</label><select data-i="${i}" data-k="fit">
+              <option value="fit"${s.fit!=="fill"?" selected":""}>Show the whole picture</option>
+              <option value="fill"${s.fit==="fill"?" selected":""}>Fill the screen (may crop edges)</option></select></div>` : `<div class="half"><label>Length</label><input type="text" value="Plays to the end" disabled></div>`}`;
+      return `<div class="slidecard${s.enabled===false?" off":""}">
+        ${thumb}
+        <div>
+          <div class="fields">
+            ${textFields}
+            ${kind !== "video" ? `<div><label>Seconds on screen</label><input type="number" min="3" max="120" data-i="${i}" data-k="seconds" value="${esc(s.seconds||10)}"></div>` : `<div></div>`}
+            <div><label>Start showing</label><input type="date" data-i="${i}" data-k="start" value="${esc(s.start||"")}"></div>
+            <div><label>Stop after</label><input type="date" data-i="${i}" data-k="end" value="${esc(s.end||"")}"></div>
+            <div style="display:flex;align-items:flex-end"><label class="switch"><input type="checkbox" data-i="${i}" data-k="enabled"${s.enabled!==false?" checked":""}> On the TV</label></div>
+          </div>
+          <div class="cardtools">
+            <button class="ghost" data-move="${i}" data-d="-1" ${i===0?"disabled":""} title="Move up">▲ Up</button>
+            <button class="ghost" data-move="${i}" data-d="1" ${i===state.slides.length-1?"disabled":""} title="Move down">▼ Down</button>
+            <span class="sp"></span>
+            <button class="danger" data-del="${i}">Delete</button>
+          </div>
+        </div></div>`;
+    }).join("");
+    box.querySelectorAll("img[data-raw],video[data-raw]").forEach(m => m.addEventListener("error", () => { if(m.src !== m.dataset.raw) m.src = m.dataset.raw; }, {once:true}));
+
+    $("#ticker").innerHTML = state.ticker.map((t, i) => `<div class="listrow"><input type="text" maxlength="140" data-list="ticker" data-i="${i}" value="${esc(t)}"><button class="ghost" data-rm="ticker" data-i="${i}" title="Remove">✕</button></div>`).join("")
+      || `<div class="empty">No messages. The ticker will show headlines only.</div>`;
+    $("#hours").innerHTML = state.hours.map((h, i) => `<div class="listrow hoursrow"><input type="text" placeholder="Day(s)" data-list="hours" data-f="day" data-i="${i}" value="${esc(h.day)}"><input type="text" placeholder="Time or Closed" data-list="hours" data-f="time" data-i="${i}" value="${esc(h.time)}"><button class="ghost" data-rm="hours" data-i="${i}" title="Remove">✕</button></div>`).join("");
+  }
+
+  /* ---------- edits ---------- */
+  document.addEventListener("input", e => {
+    const t = e.target; if(!state) return;
+    if(t.dataset.k){ const s = state.slides[+t.dataset.i]; const k = t.dataset.k;
+      if(k === "enabled"){ s.enabled = t.checked; t.closest(".slidecard").classList.toggle("off", !t.checked); }
+      else if(k === "seconds") s.seconds = Math.max(3, Math.min(120, parseInt(t.value) || 10));
+      else if(k === "start" || k === "end"){ if(t.value) s[k] = t.value; else delete s[k]; }
+      else s[k] = t.value;
+    } else if(t.dataset.list === "ticker") state.ticker[+t.dataset.i] = t.value;
+    else if(t.dataset.list === "hours") state.hours[+t.dataset.i][t.dataset.f] = t.value;
+    else if(t.id === "showBuiltIn") state.showBuiltIn = t.checked;
+    else if(t.id === "showNews") state.showNews = t.checked;
+    else if(t.id === "uploadEvery") state.uploadEvery = parseInt(t.value) || 3;
+    setDirty();
+  });
+  document.addEventListener("change", e => { if(e.target.matches("select,input[type=checkbox],input[type=date]")) e.target.dispatchEvent(new Event("input", {bubbles:true})); });
+  document.addEventListener("click", e => {
+    const b = e.target.closest("button"); if(!b || !state) return;
+    if(b.dataset.move !== undefined){ const i = +b.dataset.move, j = i + (+b.dataset.d); [state.slides[i], state.slides[j]] = [state.slides[j], state.slides[i]]; render(); setDirty(); }
+    else if(b.dataset.del !== undefined){
+      const s = state.slides[+b.dataset.del];
+      if(!confirm(`Delete "${s.title || "this slide"}" from the screen?`)) return;
+      if(s.src){ if(pending.has(s.src)){ URL.revokeObjectURL(pending.get(s.src).url); pending.delete(s.src); } else if(!state.slides.some((x, k) => k !== +b.dataset.del && x.src === s.src)) removed.add(s.src); }
+      state.slides.splice(+b.dataset.del, 1); render(); setDirty();
+    }
+    else if(b.dataset.rm){ state[b.dataset.rm].splice(+b.dataset.i, 1); render(); setDirty(); }
+  });
+  $("#addTicker").onclick = () => { state.ticker.push(""); render(); setDirty(); const all = document.querySelectorAll('[data-list="ticker"]'); all[all.length-1].focus(); };
+  $("#addHours").onclick = () => { state.hours.push({day:"", time:""}); render(); setDirty(); };
+  $("#discard").onclick = () => { if(confirm("Undo all changes since the last publish?")){ pending.forEach(p => URL.revokeObjectURL(p.url)); load(); } };
+
+  /* ---------- text announcement ---------- */
+  const dlg = $("#textDlg");
+  $("#addText").onclick = () => { $("#tTitle").value = ""; $("#tText").value = ""; dlg.showModal(); $("#tTitle").focus(); };
+  $("#tCancel").onclick = () => dlg.close();
+  $("#tSave").onclick = () => {
+    const title = $("#tTitle").value.trim(), text = $("#tText").value.trim();
+    if(!title && !text) return;
+    state.slides.push({ id: uid(), kind: "text", title, text, seconds: 12, enabled: true });
+    dlg.close(); render(); setDirty();
+  };
+
+  /* ---------- uploads ---------- */
+  const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  const slug = n => n.replace(/\.[^.]+$/, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "file";
+  const toBase64 = blob => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(",")[1]); r.onerror = rej; r.readAsDataURL(blob); });
+  async function prepImage(file){
+    if(file.type === "image/gif") return { blob: file, ext: "gif" };
+    let bmp;
+    try{ bmp = await createImageBitmap(file); }
+    catch(e){ throw new Error(`"${file.name}" isn't a picture this browser can read. Save it as JPG or PNG and try again.`); }
+    const scale = Math.min(1, 1920 / bmp.width, 1080 / bmp.height);
+    const w = Math.round(bmp.width * scale), h = Math.round(bmp.height * scale);
+    const cv = document.createElement("canvas"); cv.width = w; cv.height = h;
+    const cx = cv.getContext("2d"); cx.fillStyle = "#fff"; cx.fillRect(0, 0, w, h); cx.drawImage(bmp, 0, 0, w, h);
+    const blob = await new Promise(r => cv.toBlob(r, "image/jpeg", 0.88));
+    return { blob, ext: "jpg" };
+  }
+  async function addFiles(files){
+    const msg = $("#uploadMsg"); const notes = [];
+    for(const file of files){
+      try{
+        const isVideo = file.type.startsWith("video/"), isImage = file.type.startsWith("image/");
+        if(!isVideo && !isImage){ notes.push(`"${file.name}" was skipped. Only pictures and videos can be added.`); continue; }
+        if(isVideo && file.size > 50 * 1024 * 1024){ notes.push(`"${file.name}" is over 50 MB. Shorten or compress the video and try again.`); continue; }
+        msg.innerHTML = `<div class="msg info">Preparing ${esc(file.name)}…</div>`;
+        const { blob, ext } = isVideo ? { blob: file, ext: (file.name.split(".").pop() || "mp4").toLowerCase() } : await prepImage(file);
+        const path = `uploads/${uid()}-${slug(file.name)}.${ext}`;
+        pending.set(path, { base64: await toBase64(blob), url: URL.createObjectURL(blob) });
+        state.slides.push({ id: uid(), kind: isVideo ? "video" : "image", title: file.name.replace(/\.[^.]+$/, ""), src: path, seconds: 10, fit: "fit", enabled: true });
+      }catch(e){ notes.push(e.message); }
+    }
+    msg.innerHTML = notes.length ? `<div class="msg err">${notes.map(esc).join("<br>")}</div>` : "";
+    render(); setDirty();
+  }
+  const drop = $("#drop"), input = $("#file");
+  drop.onclick = () => input.click();
+  drop.onkeydown = e => { if(e.key === "Enter" || e.key === " "){ e.preventDefault(); input.click(); } };
+  input.onchange = () => { addFiles([...input.files]); input.value = ""; };
+  ["dragenter","dragover"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add("over"); }));
+  ["dragleave","drop"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove("over"); }));
+  drop.addEventListener("drop", e => addFiles([...e.dataTransfer.files]));
+
+  /* ---------- publish: one commit with content.json + new files - deleted files ---------- */
+  async function publishOnce(){
+    const ref = await gh(`${repoPath()}/git/ref/heads/${branchPath()}`);
+    const head = await gh(`${repoPath()}/git/commits/${ref.object.sha}`);
+    const tree = [];
+    for(const [path, p] of pending){
+      if(!p.blobSha) p.blobSha = (await gh(`${repoPath()}/git/blobs`, { method:"POST", body:{ content: p.base64, encoding: "base64" } })).sha;
+      tree.push({ path, mode: "100644", type: "blob", sha: p.blobSha });
+    }
+    for(const path of removed) tree.push({ path, mode: "100644", type: "blob", sha: null });
+    const out = { note: "Managed by admin.html. Empty lists mean 'use the defaults in config.js'.", updated: new Date().toISOString(),
+      ...state, ticker: state.ticker.map(t => t.trim()).filter(Boolean), hours: state.hours.filter(h => (h.day||"").trim() || (h.time||"").trim()) };
+    tree.push({ path: "content.json", mode: "100644", type: "blob", content: JSON.stringify(out, null, 2) + "\n" });
+    const t = await gh(`${repoPath()}/git/trees`, { method:"POST", body:{ base_tree: head.tree.sha, tree } });
+    const n = pending.size, d = removed.size;
+    const parts = [n && `${n} new file${n>1?"s":""}`, d && `${d} removed`].filter(Boolean).join(", ");
+    const c = await gh(`${repoPath()}/git/commits`, { method:"POST", body:{ message: "Update lobby screen content" + (parts ? ` (${parts})` : ""), tree: t.sha, parents: [ref.object.sha] } });
+    await gh(`${repoPath()}/git/refs/heads/${branchPath()}`, { method:"PATCH", body:{ sha: c.sha } });
+  }
+  $("#publish").onclick = async () => {
+    const btn = $("#publish"); btn.disabled = true; $("#status").className = ""; $("#status").textContent = "Publishing…";
+    try{
+      try{ await publishOnce(); }
+      catch(e){ if(e.status === 409 || e.status === 422) await publishOnce(); else throw e; }   // someone else saved at the same moment: try once more
+      pending.forEach(p => URL.revokeObjectURL(p.url));
+      state.ticker = state.ticker.map(t => t.trim()).filter(Boolean);
+      saved = JSON.stringify(state); pending.clear(); removed.clear(); render(); setDirty();
+      $("#status").className = ""; $("#status").textContent = "Published! The lobby TV will update in about 5–10 minutes.";
+    }catch(e){
+      $("#status").className = "dirty"; $("#status").textContent = "Couldn't publish: " + friendly(e);
+      btn.disabled = false;
+    }
+  };
+
+  /* ---------- start ---------- */
+  if(cfg.token && cfg.owner && cfg.repo) load(); else { $("#loading").classList.add("hidden"); showConnect(); }
+})();
+</script>
+</body>
+</html>

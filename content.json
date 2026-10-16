@@ -1,0 +1,9 @@
+{
+  "note": "Managed by admin.html. Empty lists mean 'use the defaults in config.js'.",
+  "showBuiltIn": true,
+  "showNews": true,
+  "uploadEvery": 3,
+  "ticker": [],
+  "hours": [],
+  "slides": []
+}

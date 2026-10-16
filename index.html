@@ -158,6 +158,18 @@
   .fbhandle{display:flex;align-items:center;gap:20px;margin-top:40px;font-size:40px;font-weight:700;color:var(--ink)}
   .fbhandle .f{display:inline-flex;align-items:center;justify-content:center;width:72px;height:72px;border-radius:18px;background:#1877F2;color:#fff;font-size:52px;font-weight:800;line-height:1;padding-top:8px}
 
+  /* office-uploaded slides */
+  .upload{background:#000}
+  .upload .blurbg{position:absolute;inset:-60px;background-size:cover;background-position:center;filter:blur(40px) brightness(.55)}
+  .upload > img,.upload > video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+  .upload > img.fill{object-fit:cover}
+  .upload.text{background:radial-gradient(1200px 800px at 85% 20%,#1b5cff 0%,#0b1f4d 60%);color:#fff}
+  .upload.text .pad{display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;gap:40px;padding:100px 180px}
+  .upload.text h1{color:#fff;font-size:104px}
+  .upload.text .lead{color:#dbe5ff;font-size:50px;white-space:pre-line;max-width:1400px}
+  .brandline{display:flex;align-items:center;gap:18px;font-size:40px;font-weight:700;color:#fff}
+  .brandline img{height:84px} .brandline b{color:#ff5a63;font-weight:800}
+
   /* ads */
   .ad{background:#000}
   .ad img,.ad video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
@@ -188,8 +200,25 @@
 
 <script src="config.js"></script>
 <script>
-(function(){
-  const C = window.SIGNAGE, B = C.business;
+(async function(){
+  const C = window.SIGNAGE;
+  /* ---------- office-managed content (content.json, written by admin.html) ---------- */
+  async function getText(url){
+    try{ const r = await fetch(url + "?t=" + Date.now(), {cache:"no-store", signal: AbortSignal.timeout(5000)}); return r.ok ? await r.text() : null; }
+    catch(e){ return null; }
+  }
+  const contentText = await getText("content.json");
+  C.uploads = []; C.builtIn = true; C.uploadEvery = 3;
+  if(contentText){ try{
+    const j = JSON.parse(contentText);
+    if(Array.isArray(j.ticker) && j.ticker.filter(Boolean).length) C.ticker = j.ticker.filter(Boolean);
+    if(Array.isArray(j.hours) && j.hours.length) C.hours = j.hours;
+    if(typeof j.showNews === "boolean") C.news = Object.assign({}, C.news, {enabled: j.showNews});
+    if(Array.isArray(j.slides)) C.uploads = j.slides;
+    if(typeof j.showBuiltIn === "boolean") C.builtIn = j.showBuiltIn;
+    if(j.uploadEvery > 0) C.uploadEvery = j.uploadEvery;
+  }catch(e){} }
+  const B = C.business;
   const $ = s => document.querySelector(s);
   const esc = s => String(s==null?"":s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));
 
@@ -377,6 +406,15 @@
         </div>
         <div class="qr in"><img src="assets/qr-facebook.svg" alt="QR code"><b>Scan to follow</b><span>@dental360usa</span></div>
       </div>`,
+    upload: s => { const u = s.up, src = esc(u.src||"").replace(/'/g,"%27");
+      if(u.kind==="text") return `
+        <div class="pad">
+          <div class="brandline in"><img src="assets/tooth.png" alt=""><span>Dental <b>360</b></span></div>
+          <h1 class="in">${esc(u.title||"")}</h1>
+          <div class="lead in">${esc(u.text||"")}</div>
+        </div>`;
+      if(u.kind==="video") return `<video src="${src}" muted autoplay playsinline></video>`;
+      return `<div class="blurbg" style="background-image:url('${src}')"></div><img class="${u.fit==="fill"?"fill":""}" src="${src}" alt="">`; },
     ad: a => {
       if(a.type==="image") return `<span class="adtag">Sponsored</span><img src="${esc(a.src)}" alt="">`;
       if(a.type==="video") return `<span class="adtag">Sponsored</span><video src="${esc(a.src)}" muted autoplay playsinline></video>`;
@@ -390,25 +428,42 @@
 
   /* ---------- playlist: content slides with ads interleaved ---------- */
   function playlist(){
+    const base = C.builtIn ? C.slides : [];
+    const ups = (C.uploads||[]).filter(u => u && u.enabled !== false).map(u => ({type:"upload", up:u}));
+    let mixed = [];
+    if(!ups.length) mixed = base.slice();
+    else if(!base.length) mixed = ups.slice();
+    else {                                   // one office slide after every N built-in slides
+      const every = Math.max(1, C.uploadEvery||3); let k = 0, n = 0;
+      for(const s of base){ mixed.push(s); if(++n % every === 0) mixed.push(ups[k++ % ups.length]); }
+      while(k < ups.length) mixed.push(ups[k++]);
+    }
     const out = []; let adI = 0, n = 0;
-    for(const s of C.slides){
+    for(const s of mixed){
       out.push(s); n++;
       if(C.ads.length && C.adEvery>0 && n % C.adEvery === 0){ out.push({type:"ad", ad:C.ads[adI++ % C.ads.length]}); }
     }
-    return out;
+    return out.length ? out : [{type:"welcome"}];
   }
   const list = playlist();
+  const today = () => new Intl.DateTimeFormat("en-CA",{timeZone:B.timezone}).format(new Date());   // YYYY-MM-DD
+  function playable(s){
+    if(s.type==="news" && !newsItems.length) return false;
+    if(s.type==="upload"){ const d = today(), u = s.up; if((u.start && d < u.start) || (u.end && d > u.end)) return false; }
+    return true;
+  }
   const slidesEl = $("#slides"), prog = $("#progress");
   let i = -1, timer = null, current = null, paused = false;
 
   function show(step=1){
     clearTimeout(timer);
+    const dir = step >= 0 ? 1 : -1;
     i = (i + step + list.length) % list.length;
-    const s = list[i];
-    if(s.type==="news" && !newsItems.length && list.some(x=>x.type!=="news")) return show(step>=0 ? 1 : -1);
+    for(let tries = 0; tries < list.length && !playable(list[i]); tries++) i = (i + dir + list.length) % list.length;
+    const s = playable(list[i]) ? list[i] : {type:"welcome"};
     const el = document.createElement("div");
     const isAd = s.type==="ad";
-    el.className = "slide " + (isAd ? "ad" : s.type);
+    el.className = "slide " + (isAd ? "ad" : s.type) + (s.type==="upload" ? " " + (s.up.kind||"image") : "");
     const builder = isAd ? T.ad : T[s.type];
     el.innerHTML = builder ? builder(isAd ? s.ad : s) : `<div class="pad"><h2>Unknown slide type: ${esc(s.type)}</h2></div>`;
     slidesEl.appendChild(el);
@@ -416,12 +471,12 @@
     const old = current; current = el;
     if(old){ old.classList.remove("active"); setTimeout(()=>old.remove(), 1000); }
 
-    let secs = (isAd ? s.ad.seconds : s.seconds) || C.defaultSeconds;
+    let secs = (isAd ? s.ad.seconds : s.type==="upload" ? s.up.seconds : s.seconds) || C.defaultSeconds;
     const vid = el.querySelector("video");
     if(vid){ vid.onended = ()=>!paused && show(1); vid.onerror = ()=>show(1); secs = 600; }
     prog.style.transition = "none"; prog.style.width = "0";
     requestAnimationFrame(()=>requestAnimationFrame(()=>{ prog.style.transition = `width ${secs}s linear`; prog.style.width = "100%"; }));
-    $("#hint").textContent = `${i+1}/${list.length} · ${s.type}${isAd?" ("+s.ad.type+")":""}${paused?" · PAUSED":""}`;
+    $("#hint").textContent = `${i+1}/${list.length} · ${s.type}${isAd?" ("+s.ad.type+")":""}${s.type==="upload"?" ("+(s.up.kind||"image")+")":""}${paused?" · PAUSED":""}`;
     if(!paused) timer = setTimeout(()=>show(1), secs*1000);
   }
 
@@ -436,8 +491,14 @@
   if(q.has("debug")) $("#hint").style.display = "block";
   if(q.has("slide")){ const idx = list.findIndex(s=>s.type===q.get("slide")); if(idx>=0) i = idx-1; }
 
-  /* ---------- periodic reload so config edits reach the TV ---------- */
-  setTimeout(()=>location.reload(), (C.reloadEveryHours||4)*3600*1000);
+  /* ---------- pick up changes: check every few minutes, reload only when online ---------- */
+  async function safeReload(){ if(await getText("index.html")) location.reload(); }
+  const configText = await getText("config.js");
+  setInterval(async ()=>{
+    const [a, b] = await Promise.all([getText("content.json"), getText("config.js")]);
+    if((a !== null && a !== contentText) || (b !== null && configText !== null && b !== configText)) safeReload();
+  }, (C.checkForUpdatesMinutes||3)*60*1000);
+  setInterval(safeReload, (C.reloadEveryHours||4)*3600*1000);
 
   // preload photos then start
   const imgs = ["assets/tooth.png","assets/photo-dentist.jpg","assets/photo-smile.jpg","assets/photo-patient.jpg"].map(src=>new Promise(r=>{const im=new Image();im.onload=im.onerror=r;im.src=src;}));

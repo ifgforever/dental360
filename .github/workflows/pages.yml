@@ -1,10 +1,13 @@
-# Publishes the signage to GitHub Pages every time content is pushed.
+# Publishes the signage to GitHub Pages.
+# Runs on every push (including saves from the admin.html "Manage screen" page)
+# and every 30 minutes to pull fresh Chicago headlines into news.json.
 # One-time setup: repo Settings → Pages → Source: "GitHub Actions".
 # Until Pages is switched on, this workflow simply skips instead of failing.
 name: Publish signage to GitHub Pages
 on:
   push:
-    branches: [main, claude/dazzling-faraday-nn6n9g]
+  schedule:
+    - cron: "*/30 * * * *"
   workflow_dispatch:
 permissions:
   contents: read
@@ -38,6 +41,11 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Refresh Chicago headlines
+        run: node scripts/build-news.mjs || echo "Headline refresh failed; publishing the last saved headlines"
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

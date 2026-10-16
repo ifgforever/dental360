@@ -37,10 +37,18 @@ window.SIGNAGE = {
     { day: "Sunday",          time: "Closed" }
   ],
 
+  /* ---------- Office "Manage screen" page (admin.html) ----------
+     Staff upload pictures, videos and announcements there; it saves them to
+     content.json in this GitHub repo. The page finds the repo by itself when
+     it runs on GitHub Pages; these are the fallback if it can't.          */
+  github: { owner: "ifgforever", repo: "dental360" },
+
   /* ---------- Playback ---------- */
   // Seconds each slide stays on screen unless a slide sets its own "seconds".
   defaultSeconds: 12,
-  // Reload the page this often (hours) so edits to this file show up on the TV.
+  // The TV checks for new content this often (minutes) and refreshes itself when something changed.
+  checkForUpdatesMinutes: 3,
+  // Full refresh this often (hours) as a safety net. Neither refresh happens while the internet is down.
   reloadEveryHours: 4,
 
   /* ---------- Chicago news headlines in the ticker ----------
