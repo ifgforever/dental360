@@ -37,6 +37,7 @@
   #tickerwrap{flex:1;height:100%;position:relative;overflow:hidden}
   #ticker{position:absolute;top:0;height:100%;display:flex;align-items:center;white-space:nowrap;font-size:30px;font-weight:500;will-change:transform}
   #ticker span{padding:0 60px;position:relative}
+  #ticker span.hl i{font-style:normal;font-weight:700;font-size:20px;letter-spacing:1.5px;text-transform:uppercase;color:#fff;background:var(--red);padding:5px 12px;border-radius:8px;margin-right:16px;vertical-align:3px}
   #ticker span::after{content:"";position:absolute;right:-6px;top:50%;width:12px;height:12px;border-radius:50%;background:var(--sky);transform:translateY(-50%)}
   #clock{flex:0 0 auto;display:flex;align-items:center;gap:30px;padding:0 40px;height:100%;background:linear-gradient(90deg,#0b1f4d,#071a44);z-index:2}
   #clock .time{font-size:46px;font-weight:700;line-height:1}
@@ -140,6 +141,23 @@
   .locations .st b{display:block;font-size:52px;font-weight:800;color:#fff;line-height:1}
   .locations img{position:absolute;right:140px;top:50%;transform:translateY(-50%);height:620px;filter:drop-shadow(0 30px 60px rgba(0,0,0,.45))}
 
+  /* news */
+  .news{background:linear-gradient(160deg,#fff,#f2f6ff)}
+  .news .pad{padding:90px 120px}
+  .newshead{display:flex;align-items:center;justify-content:space-between}
+  .newshead .upd{font-size:24px;color:var(--muted);font-weight:500}
+  .newslist{list-style:none;margin-top:36px}
+  .newslist li{display:flex;align-items:center;gap:28px;padding:26px 0;border-bottom:2px solid #d9e2ff;font-size:38px;font-weight:500;line-height:1.25;color:var(--ink)}
+  .newslist li:last-child{border-bottom:0}
+  .newslist li i{flex:0 0 190px;white-space:nowrap;text-align:center;font-style:normal;font-weight:700;font-size:20px;letter-spacing:1.5px;text-transform:uppercase;color:#fff;background:var(--red);padding:10px 12px;border-radius:10px}
+  .newslist li span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+  /* social */
+  .social{background:linear-gradient(160deg,#f7f9ff,#e9f0ff)}
+  .social .pad{display:grid;grid-template-columns:1fr 560px;gap:80px;align-items:center}
+  .fbhandle{display:flex;align-items:center;gap:20px;margin-top:40px;font-size:40px;font-weight:700;color:var(--ink)}
+  .fbhandle .f{display:inline-flex;align-items:center;justify-content:center;width:72px;height:72px;border-radius:18px;background:#1877F2;color:#fff;font-size:52px;font-weight:800;line-height:1;padding-top:8px}
+
   /* ads */
   .ad{background:#000}
   .ad img,.ad video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
@@ -204,22 +222,78 @@
   }
   weather(); setInterval(weather, 15*60*1000);
 
-  /* ---------- ticker ---------- */
+  /* ---------- ticker (your messages + Chicago headlines) ---------- */
   $("#barOffice").textContent = B.office;
-  (function ticker(){
+  const ticker = (function(){
     const el = $("#ticker");
-    const html = C.ticker.map(t=>`<span>${esc(t)}</span>`).join("");
+    const build = items => items.map(t => t.source
+      ? `<span class="hl"><i>${esc(t.source)}</i>${esc(t.title)}</span>`
+      : `<span>${esc(t)}</span>`).join("");
+    let html = build(C.ticker), pending = null, started = performance.now();
     el.innerHTML = html + html;              // doubled for a seamless loop
-    const w = el.scrollWidth/2;
+    let w = el.scrollWidth/2;
     const speed = 140;                        // px per second
     let x = $("#tickerwrap").clientWidth, last = performance.now();
     (function step(now){
       x -= (now-last)/1000*speed; last = now;
-      if(x < -w) x += w;
+      if(x < -w){ x += w; if(pending){ el.innerHTML = pending + pending; w = el.scrollWidth/2; pending = null; } }
       el.style.transform = `translateX(${x}px)`;
       requestAnimationFrame(step);
     })(last);
+    return { set(items){            // swap content at the loop seam so nothing jumps
+      const h = build(items);
+      if(performance.now() - started < 8000){ el.innerHTML = h + h; w = el.scrollWidth/2; pending = null; }
+      else pending = h;
+    } };
   })();
+
+  /* ---------- Chicago headlines ---------- */
+  const N = C.news || {};
+  const skip = (N.skipWords||[]).map(w=>w.toLowerCase());
+  const clean = items => items.filter(i => i.title && !skip.some(w => i.title.toLowerCase().includes(w)));
+  const STOP = new Set("a an the and or of in on at to for with by from as is are was were be after over into amid says said new chicago chicagos city".split(" "));
+  const words = t => new Set(t.toLowerCase().replace(/[^a-z0-9 ]+/g," ").split(/\s+/).filter(w=>w.length>2 && !STOP.has(w)));
+  const dedupe = items => { const kept=[]; return items.filter(i=>{ const w=words(i.title); let n=0;
+    if(kept.some(k=>{ n=0; for(const x of w) if(k.has(x)) n++; return n/Math.min(w.size,k.size||1)>=0.6 && n>=3; })) return false; kept.push(w); return true; }); };
+  let newsItems = [];
+  function mixTicker(news){
+    if(!news.length){ ticker.set(C.ticker); return; }
+    const out = [], per = N.newsPerMessage || 2; let ni = 0, mi = 0;
+    const rounds = Math.max(C.ticker.length, Math.ceil(news.length/per));
+    for(let r=0; r<rounds; r++){
+      for(let k=0;k<per;k++) out.push(news[ni++ % news.length]);
+      out.push(C.ticker[mi++ % C.ticker.length]);
+    }
+    ticker.set(out);
+  }
+  // Plan A: news.json, refreshed by GitHub every 30 min. Plan B: read the feeds live through a public proxy.
+  async function fromJson(){
+    const r = await fetch("news.json?t=" + Date.now(), {cache:"no-store"}); if(!r.ok) throw 0;
+    const j = await r.json();
+    if(Date.now() - new Date(j.updated).getTime() > (N.maxAgeHours||12)*3600*1000) throw 0;
+    return clean(j.items);
+  }
+  async function fromFeeds(){
+    const per = N.perFeed || 4, got = [];
+    await Promise.all((N.feeds||[]).map(async f => {
+      try{
+        const r = await fetch("https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent(f.url), {signal: AbortSignal.timeout(15000)});
+        const j = await r.json();
+        const items = (j.items||[]).map(it => ({ source: f.name, title: it.title||"", time: new Date(it.pubDate||0).getTime()||0 }));
+        got.push(clean(items).sort((a,b)=>b.time-a.time).slice(0, per));
+      }catch(e){}
+    }));
+    const out = [], max = N.maxItems || 18;
+    while(out.length < max && got.some(a=>a.length)) for(const a of got) if(a.length && out.length < max) out.push(a.shift());
+    return dedupe(out);
+  }
+  async function news(){
+    if(!N.enabled || !(N.feeds||[]).length) return;
+    let items = [];
+    try{ items = await fromJson(); }catch(e){ try{ items = await fromFeeds(); }catch(e2){} }
+    if(items.length){ newsItems = items; if(N.inTicker !== false) mixTicker(items); }
+  }
+  setInterval(news, 15*60*1000);
 
   /* ---------- slide builders ---------- */
   const starStr = n => "★".repeat(Math.round(n)) + "☆".repeat(5-Math.round(n));
@@ -288,6 +362,21 @@
         <div class="lead in">Your records travel with you — visit any Dental 360 office across Chicagoland, Wisconsin and Northwest Indiana.</div>
         <div class="states in"><div class="st"><b>IL</b>Illinois</div><div class="st"><b>WI</b>Wisconsin</div><div class="st"><b>IN</b>Indiana</div></div>
       </div>`,
+    news: () => { const list = newsItems.slice(0, 6); const upd = new Intl.DateTimeFormat("en-US",{hour:"numeric",minute:"2-digit",timeZone:B.timezone}).format(new Date()); return `
+      <div class="pad">
+        <div class="newshead in"><span class="eyebrow">Chicago headlines</span><span class="upd">Updated ${upd} · ${esc((N.feeds||[]).map(f=>f.name).join(" · "))}</span></div>
+        <ul class="newslist in">${list.map(i=>`<li><i>${esc(i.source)}</i><span>${esc(i.title)}</span></li>`).join("")}</ul>
+      </div>`; },
+    social: () => `
+      <div class="pad">
+        <div>
+          <span class="eyebrow in">Stay connected</span>
+          <h2 class="in">Follow us on Facebook</h2>
+          <div class="lead in">Office news, smile tips, seasonal reminders and community events from the Dental 360 family.</div>
+          <div class="fbhandle in"><span class="f">f</span>facebook.com/dental360usa</div>
+        </div>
+        <div class="qr in"><img src="assets/qr-facebook.svg" alt="QR code"><b>Scan to follow</b><span>@dental360usa</span></div>
+      </div>`,
     ad: a => {
       if(a.type==="image") return `<span class="adtag">Sponsored</span><img src="${esc(a.src)}" alt="">`;
       if(a.type==="video") return `<span class="adtag">Sponsored</span><video src="${esc(a.src)}" muted autoplay playsinline></video>`;
@@ -316,6 +405,7 @@
     clearTimeout(timer);
     i = (i + step + list.length) % list.length;
     const s = list[i];
+    if(s.type==="news" && !newsItems.length && list.some(x=>x.type!=="news")) return show(step>=0 ? 1 : -1);
     const el = document.createElement("div");
     const isAd = s.type==="ad";
     el.className = "slide " + (isAd ? "ad" : s.type);
@@ -351,7 +441,8 @@
 
   // preload photos then start
   const imgs = ["assets/tooth.png","assets/photo-dentist.jpg","assets/photo-smile.jpg","assets/photo-patient.jpg"].map(src=>new Promise(r=>{const im=new Image();im.onload=im.onerror=r;im.src=src;}));
-  Promise.race([Promise.all(imgs), new Promise(r=>setTimeout(r,2500))]).then(()=>show(1));
+  const firstNews = news();
+  Promise.race([Promise.all([...imgs, firstNews]), new Promise(r=>setTimeout(r,4000))]).then(()=>show(1));
 })();
 </script>
 </body>

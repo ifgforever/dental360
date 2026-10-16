@@ -6,8 +6,10 @@ Full-screen, self-running signage for the lobby TV at
 It replaces the news channel with a loop of slides about the practice:
 welcome, services, patient reviews, hours with a scan-to-book QR code,
 healthy-smile tips, promos for orthodontics / implants / whitening, and
-the "20+ locations" story. A bar along the bottom shows the Dental 360
-logo, a scrolling message ticker, the time, and the current Chicago weather.
+the "20+ locations" story, a Chicago headlines page, and a Facebook follow
+page with a QR code. A bar along the bottom shows the Dental 360 logo, a
+scrolling ticker of office messages mixed with Chicago headlines, the time,
+and the current Chicago weather.
 
 Ad slots are built in and switched off until you add something to them.
 
@@ -39,6 +41,31 @@ press **F5** on the TV device to see the change right away.
 Swap in real Irving Park Google reviews when you have them; the three in there
 now are the testimonials from the Dental 360 website. Check the Google rating
 numbers against the office's Google Business Profile before the TV goes live.
+
+## Chicago news headlines
+
+Headlines from WGN, Block Club Chicago, NBC 5, ABC 7, WTTW and the Sun-Times
+show in two places:
+
+- **The ticker** along the bottom, two headlines then one of your own messages.
+  Each headline has a red tag naming the outlet.
+- **The "Chicago headlines" slide**, a full page of the six newest stories.
+
+Each outlet writes its own headlines, so the list is mostly different stories.
+When two outlets cover the same story, the newer one is kept and the repeat
+is dropped. Headlines with words like "shooting", "killed" or "crash" are
+filtered out so the lobby screen stays calm. Edit `skipWords` in `config.js`
+to change that.
+
+**How it updates.** GitHub runs `scripts/build-news.mjs` every 30 minutes
+(the "Refresh Chicago headlines" workflow) and saves the results to
+`news.json`. The TV re-reads it every 15 minutes. If `news.json` is missing or
+more than 12 hours old, the TV reads the feeds directly through a free RSS
+service instead. If the internet is down, the ticker shows your own messages.
+
+To change outlets, edit the `news.feeds` list in `config.js`. To keep headlines
+off the ticker but keep the slide, set `inTicker: false`. To turn news off
+entirely, set `enabled: false`.
 
 ## Add an ad
 
@@ -108,7 +135,10 @@ the better choice.
 | `index.html` | The player: layout, styling, slide templates, clock, weather, ticker |
 | `config.js` | Everything you'd want to edit: text, hours, slide order, ads |
 | `assets/` | Logo, tooth graphic, photos, QR code (`qr-book.svg` points to the online booking page) |
-| `.github/workflows/pages.yml` | Publishes to GitHub Pages on each push |
+| `news.json` | Latest Chicago headlines, refreshed automatically |
+| `scripts/build-news.mjs` | Fetches the headlines into `news.json` |
+| `.github/workflows/news.yml` | Runs the headline refresh every 30 minutes |
+| `.github/workflows/pages.yml` | Publishes to GitHub Pages on each push (skips until Pages is on) |
 
 Weather comes from Open-Meteo (free, no account needed). If the TV has no
 internet the clock still works and the weather chip simply stays hidden.

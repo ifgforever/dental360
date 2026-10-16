@@ -1,5 +1,6 @@
 # Publishes the signage to GitHub Pages every time content is pushed.
 # One-time setup: repo Settings → Pages → Source: "GitHub Actions".
+# Until Pages is switched on, this workflow simply skips instead of failing.
 name: Publish signage to GitHub Pages
 on:
   push:
@@ -13,7 +14,24 @@ concurrency:
   group: pages
   cancel-in-progress: true
 jobs:
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      enabled: ${{ steps.pages.outputs.enabled }}
+    steps:
+      - id: pages
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh api "repos/${{ github.repository }}/pages" >/dev/null 2>&1; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::GitHub Pages is not enabled yet. Repo Settings → Pages → Source: GitHub Actions."
+          fi
   deploy:
+    needs: check
+    if: needs.check.outputs.enabled == 'true'
     runs-on: ubuntu-latest
     environment:
       name: github-pages

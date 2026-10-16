@@ -43,6 +43,36 @@ window.SIGNAGE = {
   // Reload the page this often (hours) so edits to this file show up on the TV.
   reloadEveryHours: 4,
 
+  /* ---------- Chicago news headlines in the ticker ----------
+     Headlines are pulled from the RSS feeds below every 30 minutes by
+     GitHub (see news.json) and mixed into the scrolling ticker:
+     two headlines, then one of your own messages, and so on.
+     Set enabled:false to go back to your messages only.
+     skipWords hides headlines containing those words — handy for keeping
+     grim stories off a waiting-room screen.                              */
+  news: {
+    enabled: true,         // false = no headlines anywhere
+    inTicker: true,        // false = headlines only on the news slide, ticker shows your messages only
+    perFeed: 4,            // newest headlines taken from each feed
+    maxItems: 18,          // total headlines in rotation
+    newsPerMessage: 2,     // headlines shown between each of your own ticker messages
+    maxAgeHours: 12,       // ignore news.json older than this and fetch live instead
+    feeds: [
+      { name: "WGN",        url: "https://wgntv.com/feed/" },
+      { name: "Block Club", url: "https://blockclubchicago.org/feed/" },
+      { name: "NBC 5",      url: "https://www.nbcchicago.com/?rss=y" },
+      { name: "ABC 7",      url: "https://abc7chicago.com/feed/" },
+      { name: "WTTW",       url: "https://news.wttw.com/rss.xml" },
+      { name: "Sun-Times",  url: "https://chicago.suntimes.com/feed" }
+      // more that work: { name: "FOX 32", url: "https://www.fox32chicago.com/rss/category/news" },
+      //                 { name: "Eater",  url: "https://chicago.eater.com/rss/index.xml" }
+    ],
+    skipWords: ["shooting", "shot ", "shots fired", "killed", "kills", "murder", "stabbed", "stabbing",
+                "dead", "death", "dies", "died", "fatal", "homicide", "body found", "rape", "sexual",
+                "assault", "abuse", "overdose", "suicide", "porn", "pedophile", "molest", "attack", "burglar",
+                "robber", "carjack", "gunfire", "violence", "crash", "missing"]
+  },
+
   /* ---------- Scrolling ticker at the bottom ---------- */
   ticker: [
     "Welcome to Dental 360 Irving Park Family Dentistry",
@@ -88,7 +118,8 @@ window.SIGNAGE = {
   ],
 
   /* ---------- Slide order ----------
-     Types: welcome, services, tip, reviews, promo, values, hours, locations
+     Types: welcome, services, tip, reviews, promo, values, hours, locations,
+            news (Chicago headlines page), social (Facebook follow + QR)
      Remove a line to drop a slide, duplicate it to show it more often,
      add "seconds: 20" to keep it up longer. Promo slides take a "photo"
      from the assets folder and an optional "photoPosition" (e.g. "center 20%")
@@ -103,6 +134,7 @@ window.SIGNAGE = {
       text: "Traditional braces or nearly invisible Invisalign® aligners for kids, teens and adults. Ask us which is right for you.",
       photo: "assets/photo-smile.jpg", photoPosition: "center 30%" },
     { type: "reviews" },
+    { type: "news", seconds: 15 },
     { type: "values" },
     { type: "tip" },
     { type: "promo",
@@ -112,6 +144,7 @@ window.SIGNAGE = {
       photo: "assets/photo-patient.jpg", photoPosition: "center 22%" },
     { type: "hours", seconds: 15 },
     { type: "locations" },
+    { type: "social" },
     { type: "tip" },
     { type: "promo",
       eyebrow: "Cosmetic Dentistry",
