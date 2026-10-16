@@ -65,6 +65,9 @@ window.SIGNAGE = {
   },
 
   /* ---------- Playback ---------- */
+  // Light mode for low-power players such as the BrightSign LS425/LS445: slides cut instead
+  // of fading, and blur and shadow effects are off. Same as adding ?lite to the TV's address.
+  lite: false,
   // Seconds each slide stays on screen unless a slide sets its own "seconds".
   defaultSeconds: 12,
   // The TV checks for new content this often (minutes) and refreshes itself when something changed.

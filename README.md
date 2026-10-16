@@ -201,13 +201,21 @@ starts the screen on its own after a power cut and that you can check remotely.
 
 | Player | Price | Best for |
 |---|---|---|
-| **BrightSign LS425** (1080p) or **LS445** (4K). Add **W** for built-in Wi-Fi | about $250–$355 | Recommended. Built for signage, boots straight into the screen, no apps or pop-ups, free remote status and reboot at control.bsn.cloud |
+| **BrightSign LS425** (1080p) or **LS445** (4K) | about $250–$355 | Recommended. Built for signage, boots straight into the screen, no apps or pop-ups, free remote status and reboot at control.bsn.cloud. Wired Ethernet only; for Wi-Fi add the **WD-105** module (about $85–$99) |
 | **onn 4K Pro** (Google TV, Walmart) + **Fully Kiosk Browser** Plus licence | about $50 + about €6–8 one-time | Budget. Has an Ethernet port. Needs more setup and occasional OS updates |
 | Amazon **Fire TV Stick 4K Select** or newer Fire TV Sticks | — | **Avoid.** They run Vega OS and can't install Fully Kiosk or other outside apps |
+| No-name Android TV boxes (X96, H96, T95 and similar) | — | **Avoid.** The FBI warned in 2025 that many uncertified Android boxes ship with BADBOX 2.0 malware. Only use Google TV / Android TV certified devices |
 | The TV's own web browser | — | Avoid. Doesn't restart the screen on its own |
 
-BrightSign isn't a full web browser, so test the screen on the first unit
-before buying more.
+**No LS model has Wi-Fi built in.** They have antenna connectors, but Wi-Fi
+only works after you fit the separate WD-105 card. Use wired Ethernet where
+you can.
+
+**Light mode.** BrightSign rates the LS models for "simple" HTML5 pages. If
+slides stutter on one, add `?lite` to its address or set `lite: true` in
+`config.js`. Slides then cut instead of fading, and blur and shadow effects
+switch off. BrightSign isn't a full web browser, so test the screen on the
+first unit before buying more.
 
 **BrightSign setup.** Register the player at control.bsn.cloud. Create a
 presentation with one full-screen HTML5 zone whose source is the screen's

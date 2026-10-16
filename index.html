@@ -177,6 +177,13 @@
   .ad .pad .lead{color:#2d3d63}
   .adtag{position:absolute;top:28px;right:34px;font-size:20px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:#fff;background:rgba(0,0,0,.45);padding:8px 16px;border-radius:999px;z-index:3}
 
+  /* light mode for low-power players (?lite in the address, or lite:true in config.js):
+     no fades, no blur or shadows, so slides change instantly and smoothly */
+  .lite .slide,.lite .slide .in{transition:none !important}
+  .lite .slide .in{transform:none !important;opacity:1 !important}
+  .lite .upload .blurbg{display:none}
+  .lite .tip img,.lite .locations img{filter:none}
+  .lite #bar,.lite .card,.lite .ratingbox,.lite .qr{box-shadow:none}
   #hint{position:absolute;left:20px;top:20px;font-size:18px;color:#fff;background:rgba(0,0,0,.5);padding:8px 14px;border-radius:8px;z-index:9;display:none}
 </style>
 </head>
@@ -495,6 +502,7 @@
   });
   const q = new URLSearchParams(location.search);
   if(q.has("debug")) $("#hint").style.display = "block";
+  if(q.has("lite") || C.lite) document.body.classList.add("lite");
   if(q.has("slide")){ const idx = list.findIndex(s=>s.type===q.get("slide")); if(idx>=0) i = idx-1; }
 
   /* ---------- pick up changes: check every few minutes, reload only when online ---------- */
