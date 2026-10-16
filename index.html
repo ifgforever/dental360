@@ -454,6 +454,7 @@
   }
   const slidesEl = $("#slides"), prog = $("#progress");
   let i = -1, timer = null, current = null, paused = false;
+  const stats = { started: Date.now(), slides: 0, ads: {}, lastSlide: "", nextDue: Date.now() + 60000 };
 
   function show(step=1){
     clearTimeout(timer);
@@ -477,6 +478,9 @@
     prog.style.transition = "none"; prog.style.width = "0";
     requestAnimationFrame(()=>requestAnimationFrame(()=>{ prog.style.transition = `width ${secs}s linear`; prog.style.width = "100%"; }));
     $("#hint").textContent = `${i+1}/${list.length} · ${s.type}${isAd?" ("+s.ad.type+")":""}${s.type==="upload"?" ("+(s.up.kind||"image")+")":""}${paused?" · PAUSED":""}`;
+    stats.slides++; stats.lastSlide = s.type + (s.type==="upload" ? ":" + (s.up.title||s.up.kind||"") : "");
+    if(isAd){ const a = s.ad, name = a.name || a.title || a.src || "ad"; stats.ads[name] = (stats.ads[name]||0) + 1; }
+    stats.nextDue = Date.now() + secs*1000;
     if(!paused) timer = setTimeout(()=>show(1), secs*1000);
   }
 
@@ -499,6 +503,36 @@
     if((a !== null && a !== contentText) || (b !== null && configText !== null && b !== configText)) safeReload();
   }, (C.checkForUpdatesMinutes||3)*60*1000);
   setInterval(safeReload, (C.reloadEveryHours||4)*3600*1000);
+
+  /* ---------- heartbeat: tell Healthchecks.io this TV is online AND the slideshow is moving ---------- */
+  const M = C.monitor || {};
+  const screenName = (q.get("screen") || M.screen || "lobby").toLowerCase().replace(/[^a-z0-9_-]+/g, "-").slice(0, 100);
+  const pingBase = M.pingKey ? `https://hc-ping.com/${encodeURIComponent(M.pingKey)}/${screenName}` : "";
+  const contentSaved = (()=>{ try{ return contentText ? (JSON.parse(contentText).updated || "yes") : "none"; }catch(e){ return "unreadable content.json"; } })();
+  function report(){
+    const mins = Math.round((Date.now() - stats.started) / 60000);
+    const ads = Object.entries(stats.ads).map(([n, k]) => `${n} x${k}`).join(", ") || "none";
+    return [`screen: ${screenName}`, `office: ${B.name} ${B.office}`, `slides shown since last check-in: ${stats.slides}`,
+      `ads shown since last check-in: ${ads}`, `now showing: ${stats.lastSlide}`, `running for: ${mins} min`,
+      `headlines loaded: ${newsItems.length}`, `office content saved: ${contentSaved}`,
+      `page visible: ${document.visibilityState}`, `screen size: ${innerWidth}x${innerHeight}`, `browser: ${navigator.userAgent}`].join("\n");
+  }
+  function ping(kind, why){
+    if(!pingBase) return;
+    const body = (why ? `PROBLEM: ${why}\n` : "") + report();
+    try{ fetch(pingBase + (kind === "fail" ? "/fail" : "") + "?create=1", {method:"POST", body, keepalive:true, mode:"cors"}).catch(()=>{}); }catch(e){}
+    stats.slides = 0; stats.ads = {};
+  }
+  function checkIn(){
+    if(document.visibilityState !== "visible") return ping("fail", "the signage page is not on screen (another app may be in front)");
+    if(!paused && Date.now() > stats.nextDue + 30000) return ping("fail", "the slideshow has stopped moving");
+    ping("ok");
+  }
+  // first check-in shortly after start, then every few minutes
+  setTimeout(checkIn, 20000);
+  setInterval(checkIn, (M.everyMinutes || 5) * 60000);
+  // watchdog: if a slide gets stuck (frozen video, browser hiccup), report it and restart the page
+  setInterval(()=>{ if(!paused && Date.now() > stats.nextDue + 60000){ ping("fail", "slideshow froze; restarting the page"); stats.nextDue = Date.now() + 120000; setTimeout(safeReload, 2000); } }, 30000);
 
   // preload photos then start
   const imgs = ["assets/tooth.png","assets/photo-dentist.jpg","assets/photo-smile.jpg","assets/photo-patient.jpg"].map(src=>new Promise(r=>{const im=new Image();im.onload=im.onerror=r;im.src=src;}));

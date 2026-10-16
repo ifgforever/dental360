@@ -63,6 +63,62 @@ Only use patient photos with the patient's written permission.
    new location on its own.
 3. Point the TV at the new address and help them create their access key.
 
+## Know every TV is online and playing
+
+Each TV checks in with [Healthchecks.io](https://healthchecks.io) every 5
+minutes. The check-in is sent from the slideshow itself, so it proves the page
+is on screen and the slides are moving, not just that the device has power.
+If a TV goes quiet for 15 minutes, you get an alert.
+
+A TV reports a problem right away, and Healthchecks alerts you, when:
+
+- the slideshow stops advancing. The TV also restarts the page by itself.
+- another app is in front of the signage, such as someone pressing Home.
+
+Each check-in also notes how many slides and which ads played since the last
+one, what's on screen, and whether headlines loaded. You can see this in the
+TV's event log on Healthchecks.
+
+**Set it up (once)**
+
+1. Make a free account at healthchecks.io. Under **Integrations**, add how you
+   want alerts. Email works on the free plan.
+2. Go to **Project Settings → Ping key → Create** and paste the key into
+   `config.js` under `monitor.pingKey`.
+3. Give each TV its own name at the end of its address:
+
+       https://ifgforever.github.io/dental360/?screen=irving-park-lobby
+
+   The TV appears on your Healthchecks dashboard the first time it checks in.
+
+**Many TVs at once.** List every TV under `monitor.screens` in `config.js`.
+Then create a read-write API key in Healthchecks (**Project Settings → API
+Access**) and save it in this repo under **Settings → Secrets and variables →
+Actions** as `HEALTHCHECKS_API_KEY`. Run **Actions → Set up TV monitoring → Run
+workflow**. It creates or updates every TV with the 15-minute alert timing and
+your alert channels. It's safe to run again whenever you add TVs. TVs not on
+the list still appear on their own the first time they check in, but with
+Healthchecks' default one-day timing, so run the workflow afterwards.
+
+| Healthchecks plan | TVs | Price |
+|---|---|---|
+| Hobbyist | up to 20 | free |
+| Business | up to 100 | $20/month |
+| Business Plus | up to 1,000 | $80/month |
+
+**What it can't see.** The check-in can't tell whether the TV itself is
+switched on or set to the right input. For that, plug the TV into a smart
+plug that reports power use. A TV that's on draws far more power than one in
+standby. Turn off the TV's sleep timers too.
+
+**After hours.** If the office switches the TV and stick off at night, pause
+those checks in Healthchecks or give them a schedule there. Otherwise you'll
+get an alert every night.
+
+The ping key is visible in the page source, as it has to be for the TV to use
+it. All it allows is sending check-ins. It can't read or change your
+Healthchecks settings. Keep the API key secret.
+
 ## Change the words, hours, phone, tips, reviews
 
 Day-to-day content is easiest through the manage page above. Everything else
@@ -182,6 +238,8 @@ the better choice.
 | `assets/` | Logo, tooth graphic, photos, QR code (`qr-book.svg` points to the online booking page) |
 | `news.json` | Latest Chicago headlines, refreshed automatically |
 | `scripts/build-news.mjs` | Fetches the headlines into `news.json` |
+| `scripts/setup-monitoring.mjs` | Creates or updates a Healthchecks.io check for every TV in `monitor.screens` |
+| `.github/workflows/monitoring.yml` | "Set up TV monitoring", run by hand from the Actions tab |
 | `.github/workflows/pages.yml` | Publishes on every save and every 30 minutes with fresh headlines (skips until Pages is on) |
 
 Weather comes from Open-Meteo (free, no account needed). If the TV has no

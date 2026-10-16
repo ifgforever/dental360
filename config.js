@@ -43,6 +43,27 @@ window.SIGNAGE = {
      it runs on GitHub Pages; these are the fallback if it can't.          */
   github: { owner: "ifgforever", repo: "dental360" },
 
+  /* ---------- Is the TV online and playing? (Healthchecks.io) ----------
+     Every few minutes each TV checks in. If a TV goes quiet, or its
+     slideshow stops moving, Healthchecks.io emails or texts you.
+     1. Make a free account at https://healthchecks.io
+     2. Project Settings → "Ping key" → Create, and paste it below.
+     3. Give each TV its own name by adding ?screen=NAME to its address,
+        e.g. https://ifgforever.github.io/dental360/?screen=irving-park-lobby
+        A TV shows up on your Healthchecks dashboard the first time it checks in.
+     Leave pingKey empty to turn monitoring off.                          */
+  monitor: {
+    pingKey: "",
+    screen: "irving-park-lobby",   // name used when the address has no ?screen=
+    everyMinutes: 5,               // how often each TV checks in
+    alertAfterMinutes: 15,         // used by the setup workflow: alert after this long with no check-in
+    // List every TV here so the "Set up TV monitoring" workflow can create them all at once
+    // with the right alert timing. TVs not listed still appear on their own.
+    screens: [
+      { screen: "irving-park-lobby", name: "Irving Park – Lobby TV" }
+    ]
+  },
+
   /* ---------- Playback ---------- */
   // Seconds each slide stays on screen unless a slide sets its own "seconds".
   defaultSeconds: 12,
